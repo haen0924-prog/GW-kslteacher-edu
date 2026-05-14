@@ -1,4 +1,5 @@
 {
+  "rootDirectory": "edu-html-v2",
   "rewrites": [
     { "source": "/", "destination": "/login.html" }
   ]
