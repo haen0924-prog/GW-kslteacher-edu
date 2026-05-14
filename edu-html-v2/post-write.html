@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>글쓰기 — 수강생 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #6b7280; text-decoration: none; margin-bottom: 1.25rem; transition: color 0.15s; }
+  .back-link:hover { color: #111827; }
+  .form-group { margin-bottom: 1.25rem; }
+  textarea.input-field { resize: vertical; min-height: 240px; line-height: 1.7; }
+  .form-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <a href="board.html" class="back-link">← 목록으로</a>
+  <h1 class="page-title" style="margin-bottom:1.5rem">✏️ 새 글 작성</h1>
+
+  <div class="card" style="max-width: 720px">
+    <div id="errorMsg" class="error-msg" style="display:none"></div>
+
+    <div class="form-group">
+      <label>닉네임</label>
+      <input type="text" id="authorName" class="input-field" placeholder="표시할 이름 (비워두면 이메일 앞부분 사용)">
+    </div>
+    <div class="form-group">
+      <label>제목 *</label>
+      <input type="text" id="title" class="input-field" placeholder="제목을 입력하세요" required>
+    </div>
+    <div class="form-group">
+      <label>내용 *</label>
+      <textarea id="content" class="input-field" placeholder="내용을 입력하세요"></textarea>
+    </div>
+
+    <div class="form-footer">
+      <a href="board.html" class="btn-secondary">취소</a>
+      <button class="btn-primary" id="submitBtn" onclick="submitPost()">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('board.html');
+  })();
+
+  async function submitPost() {
+    const title      = document.getElementById('title').value.trim();
+    const content    = document.getElementById('content').value.trim();
+    const authorName = document.getElementById('authorName').value.trim();
+    const btn        = document.getElementById('submitBtn');
+    const err        = document.getElementById('errorMsg');
+
+    err.style.display = 'none';
+    if (!title)   { err.textContent = '제목을 입력해주세요.';   err.style.display='block'; return; }
+    if (!content) { err.textContent = '내용을 입력해주세요.';   err.style.display='block'; return; }
+
+    btn.disabled = true; btn.textContent = '등록 중...';
+
+    const { data: { user } } = await sb.auth.getUser();
+
+    const { error } = await sb.from('edu_posts').insert({
+      title, content,
+      user_id:     user.id,
+      author_name: authorName || user.email.split('@')[0],
+      view_count:  0,
+    });
+
+    if (error) {
+      err.textContent = '등록에 실패했습니다: ' + error.message;
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = '등록하기';
+      return;
+    }
+
+    location.href = 'board.html';
+  }
+</script>
+</body>
+</html>

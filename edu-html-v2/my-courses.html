@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이수현황 — 수강생 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .course-card { background:white; border-radius:0.875rem; border:1px solid #f3f4f6; padding:1.5rem; box-shadow:0 1px 4px rgba(0,0,0,0.04); margin-bottom:1rem; }
+  .course-header { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .course-name { font-size:1.1rem; font-weight:600; color:#111827; }
+  .info-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:0.75rem; }
+  .info-item { background:#f9fafb; border-radius:0.5rem; padding:0.75rem 1rem; }
+  .info-label { font-size:0.75rem; color:#9ca3af; margin-bottom:0.25rem; }
+  .info-value { font-size:0.9rem; font-weight:500; color:#111827; }
+  .empty { text-align:center; padding:4rem 0; color:#9ca3af; }
+  .empty-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <h1 class="page-title">📚 이수현황</h1>
+  <p class="page-sub">내 수강 과정 및 이수 현황을 확인하세요</p>
+  <div id="courseList">
+    <div class="empty"><div class="empty-icon">📚</div>불러오는 중...</div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('my-courses.html');
+
+    const { data } = await sb.from('edu_students')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('courseList');
+
+    if (!data?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📚</div>등록된 수강 정보가 없습니다.<br><small style="color:#9ca3af">관리자에게 문의하세요.</small></div>';
+      return;
+    }
+
+    const fmt = d => d ? new Date(d).toLocaleDateString('ko-KR') : '-';
+
+    el.innerHTML = data.map(s => {
+      const gisu      = s['수료_기수'];
+      const startDate = s['수강_시작일'];
+      const endDate   = s['수료_일'];
+
+      // 수강 상태 판단
+      let status = '수강중';
+      let badgeClass = 'badge-blue';
+      if (endDate && new Date(endDate) < new Date()) {
+        status = '수료'; badgeClass = 'badge-green';
+      }
+
+      return `
+        <div class="course-card">
+          <div class="course-header">
+            <span class="course-name">${gisu ? gisu + ' 수강생' : '수강생'}</span>
+            <span class="badge ${badgeClass}">${status}</span>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">이름</div>
+              <div class="info-value">👤 ${s.name}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">기수</div>
+              <div class="info-value">🏷️ ${gisu || '미설정'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">수강 시작일</div>
+              <div class="info-value">📅 ${fmt(startDate)}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">수강 종료일</div>
+              <div class="info-value">📅 ${fmt(endDate)}</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  })();
+</script>
+</body>
+</html>

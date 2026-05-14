@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자유게시판 — 수강생 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .board-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .board-table { background: white; border-radius: 0.875rem; border: 1px solid #f3f4f6; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .table-head { display: grid; grid-template-columns: 1fr 120px 110px 60px; padding: 0.75rem 1.25rem; background: #f9fafb; border-bottom: 1px solid #f3f4f6; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+  .table-row { display: grid; grid-template-columns: 1fr 120px 110px 60px; padding: 0.875rem 1.25rem; border-bottom: 1px solid #f9fafb; transition: background 0.1s; cursor: pointer; text-decoration: none; color: inherit; }
+  .table-row:last-child { border-bottom: none; }
+  .table-row:hover { background: #f0f7ff; }
+  .col-title { font-size: 0.9rem; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 1rem; }
+  .col-author, .col-date, .col-views { font-size: 0.8rem; color: #6b7280; display: flex; align-items: center; }
+  .col-author { justify-content: center; }
+  .col-date   { justify-content: center; }
+  .col-views  { justify-content: center; }
+  .empty { text-align: center; padding: 4rem 0; color: #9ca3af; }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <div class="board-header-row">
+    <div>
+      <h1 class="page-title" style="margin-bottom:0.25rem">💬 자유게시판</h1>
+      <p class="page-sub" style="margin-bottom:0">자유롭게 의견을 나눠보세요</p>
+    </div>
+    <a href="post-write.html" class="btn-primary">✏️ 글쓰기</a>
+  </div>
+
+  <div class="board-table">
+    <div class="table-head">
+      <div>제목</div>
+      <div style="text-align:center">작성자</div>
+      <div style="text-align:center">작성일</div>
+      <div style="text-align:center">조회</div>
+    </div>
+    <div id="postList"><div class="empty"><div class="empty-icon">💬</div>불러오는 중...</div></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('board.html');
+
+    const { data, error } = await sb.from('edu_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('postList');
+
+    if (error || !data?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">💬</div>게시글이 없습니다. 첫 글을 작성해보세요!</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(p => `
+      <a class="table-row" href="post.html?id=${p.id}">
+        <div class="col-title">${p.title}</div>
+        <div class="col-author">${p.author_name ?? '익명'}</div>
+        <div class="col-date">${new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+        <div class="col-views">${p.view_count ?? 0}</div>
+      </a>
+    `).join('');
+  })();
+</script>
+</body>
+</html>

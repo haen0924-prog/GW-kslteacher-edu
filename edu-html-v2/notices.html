@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공지사항 — 수강생 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .notice-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .notice-card {
+    background: white; border-radius: 0.875rem; border: 1px solid #f3f4f6;
+    padding: 1.25rem 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: box-shadow 0.15s;
+  }
+  .notice-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .notice-card.pinned { border-color: #bfdbfe; background: #f0f7ff; }
+  .notice-header { display: flex; align-items: center; gap: 0.75rem; justify-content: space-between; margin-bottom: 0.625rem; }
+  .notice-title { font-size: 1rem; font-weight: 600; color: #111827; flex: 1; }
+  .notice-date  { font-size: 0.8rem; color: #9ca3af; flex-shrink: 0; }
+  .notice-content { font-size: 0.875rem; color: #4b5563; line-height: 1.7; white-space: pre-wrap; }
+  .pin-tag { background: #dbeafe; color: #1d4ed8; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; flex-shrink: 0; }
+  .empty { text-align: center; padding: 4rem 0; color: #9ca3af; }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <h1 class="page-title">📢 공지사항</h1>
+  <p class="page-sub">중요한 공지사항을 확인하세요</p>
+  <div class="notice-list" id="noticeList">
+    <div class="empty"><div class="empty-icon">📢</div>불러오는 중...</div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('notices.html');
+
+    const { data, error } = await sb.from('edu_notices')
+      .select('*')
+      .order('is_important', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('noticeList');
+
+    if (error || !data?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📢</div>등록된 공지사항이 없습니다.</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(n => `
+      <div class="notice-card ${n.is_important ? 'pinned' : ''}">
+        <div class="notice-header">
+          <span class="notice-title">
+            ${n.is_important ? '<span class="pin-tag">📌 중요</span> ' : ''}${n.title}
+          </span>
+          <span class="notice-date">${new Date(n.created_at).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'})}</span>
+        </div>
+        <div class="notice-content">${n.content}</div>
+      </div>
+    `).join('');
+  })();
+</script>
+</body>
+</html>

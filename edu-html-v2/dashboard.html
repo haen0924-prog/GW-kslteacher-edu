@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대시보드 — 수강생 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: white; border-radius: 0.875rem; border: 1px solid #f3f4f6; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+  .stat-icon { width: 44px; height: 44px; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+  .stat-value { font-size: 1.75rem; font-weight: 700; color: #111827; line-height: 1; }
+  .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 0.2rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-header h2 { font-size: 1rem; font-weight: 600; color: #111827; }
+  .section-header a { font-size: 0.8rem; color: #2563eb; text-decoration: none; }
+  .section-header a:hover { text-decoration: underline; }
+  .list-item { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f9fafb; }
+  .list-item:last-child { border-bottom: none; }
+  .list-item a { font-size: 0.875rem; color: #374151; text-decoration: none; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 1rem; }
+  .list-item a:hover { color: #2563eb; }
+  .list-date { font-size: 0.75rem; color: #9ca3af; flex-shrink: 0; }
+  .empty { text-align: center; padding: 2.5rem 0; color: #9ca3af; font-size: 0.875rem; }
+  @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <h1 class="page-title">🏠 대시보드</h1>
+  <p class="page-sub" id="greeting">안녕하세요!</p>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-icon" style="background:#eff6ff">📚</div><div><div class="stat-value" id="s1">-</div><div class="stat-label">수강 중인 과정</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4">✅</div><div><div class="stat-value" id="s2">-</div><div class="stat-label">수료 완료</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fefce8">📢</div><div><div class="stat-value" id="s3">-</div><div class="stat-label">공지사항</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#fdf4ff">💬</div><div><div class="stat-value" id="s4">-</div><div class="stat-label">게시글</div></div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-header">
+        <h2>최근 공지사항</h2>
+        <a href="notices.html">전체보기 →</a>
+      </div>
+      <div id="noticeList"><div class="empty">불러오는 중...</div></div>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        <h2>최근 게시글</h2>
+        <a href="board.html">전체보기 →</a>
+      </div>
+      <div id="postList"><div class="empty">불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('dashboard.html');
+    const name = user.user_metadata?.full_name || user.email;
+    document.getElementById('greeting').textContent = '안녕하세요, ' + name + ' 님';
+
+    const [students, notices, posts] = await Promise.all([
+      sb.from('edu_students').select('status').eq('user_id', user.id),
+      sb.from('edu_notices').select('id,title,created_at').order('created_at',{ascending:false}).limit(5),
+      sb.from('edu_posts').select('id,title,created_at').order('created_at',{ascending:false}).limit(5),
+    ]);
+
+    const s = students.data ?? [];
+    document.getElementById('s1').textContent = s.filter(x=>x.status==='수강중').length;
+    document.getElementById('s2').textContent = s.filter(x=>x.status==='수료').length;
+    document.getElementById('s3').textContent = notices.data?.length ?? 0;
+    document.getElementById('s4').textContent = posts.data?.length ?? 0;
+
+    const fmt = d => new Date(d).toLocaleDateString('ko-KR');
+
+    const noticeEl = document.getElementById('noticeList');
+    if (notices.data?.length) {
+      noticeEl.innerHTML = notices.data.map(n => `
+        <div class="list-item">
+          <a href="notices.html">${n.title}</a>
+          <span class="list-date">${fmt(n.created_at)}</span>
+        </div>`).join('');
+    } else {
+      noticeEl.innerHTML = '<div class="empty">공지사항이 없습니다.</div>';
+    }
+
+    const postEl = document.getElementById('postList');
+    if (posts.data?.length) {
+      postEl.innerHTML = posts.data.map(p => `
+        <div class="list-item">
+          <a href="post.html?id=${p.id}">${p.title}</a>
+          <span class="list-date">${fmt(p.created_at)}</span>
+        </div>`).join('');
+    } else {
+      postEl.innerHTML = '<div class="empty">게시글이 없습니다.</div>';
+    }
+  })();
+</script>
+</body>
+</html>
