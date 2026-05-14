@@ -80,3 +80,11 @@ CREATE OR REPLACE FUNCTION increment_view_count(post_id BIGINT)
 RETURNS void AS $$
   UPDATE public.edu_posts SET view_count = view_count + 1 WHERE id = post_id;
 $$ LANGUAGE sql SECURITY DEFINER;
+
+-- =============================================
+-- 회원 탈퇴 함수 (본인 계정 삭제)
+-- =============================================
+CREATE OR REPLACE FUNCTION delete_user()
+RETURNS void AS $$
+  DELETE FROM auth.users WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER;

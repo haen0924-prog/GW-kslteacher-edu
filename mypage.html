@@ -3,75 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>마이페이지 — 수강생 관리 시스템</title>
+<title>마이페이지 — 한국수어교원 양성과정</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .section { max-width: 520px; margin-bottom: 2rem; }
-  .section-title { font-size: 1rem; font-weight: 600; color: #111827; margin-bottom: 1rem; padding-bottom: 0.625rem; border-bottom: 1px solid #f3f4f6; }
-  .form-group { margin-bottom: 1rem; }
-  .btn-row { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
-  .danger-zone { max-width: 520px; border: 1.5px solid #fca5a5; border-radius: 0.875rem; padding: 1.5rem; background: #fff5f5; }
-  .danger-title { font-size: 1rem; font-weight: 600; color: #dc2626; margin-bottom: 0.5rem; }
-  .danger-desc  { font-size: 0.875rem; color: #6b7280; margin-bottom: 1.25rem; line-height: 1.6; }
-  .btn-delete { background: #dc2626; color: white; border: none; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; }
-  .btn-delete:hover { background: #b91c1c; }
+  .section { max-width:520px; margin-bottom:2rem; }
+  .section-title { font-size:1rem; font-weight:600; color:#111827; margin-bottom:1rem; padding-bottom:0.625rem; border-bottom:1px solid #f3f4f6; }
+  .form-group { margin-bottom:1rem; }
+  .btn-row { display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem; }
+  .info-row { display:flex; justify-content:space-between; padding:0.625rem 0; border-bottom:1px solid #f9fafb; font-size:0.9rem; }
+  .info-row:last-child { border-bottom:none; }
+  .info-label { color:#6b7280; }
+  .info-value { font-weight:500; color:#111827; }
 </style>
 </head>
 <body>
 <div id="sidebar"></div>
 <div id="main">
   <h1 class="page-title">👤 마이페이지</h1>
-  <p class="page-sub">내 정보를 수정하거나 계정을 관리하세요</p>
+  <p class="page-sub">내 정보를 확인하고 이메일을 수정하세요</p>
 
-  <!-- 이름 수정 -->
+  <!-- 내 정보 -->
   <div class="section">
     <div class="card">
-      <p class="section-title">이름 수정</p>
-      <div id="nameSuccess" class="success-msg" style="display:none"></div>
-      <div id="nameError"   class="error-msg"   style="display:none"></div>
-      <div class="form-group">
-        <label>현재 이메일</label>
-        <input type="email" id="currentEmail" class="input-field" disabled style="background:#f9fafb;color:#6b7280">
-      </div>
-      <div class="form-group">
-        <label>이름</label>
-        <input type="text" id="fullname" class="input-field" placeholder="이름을 입력하세요">
-      </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="saveName()">저장</button>
-      </div>
+      <p class="section-title">내 정보</p>
+      <div id="infoArea"><div style="color:#9ca3af;font-size:0.875rem">불러오는 중...</div></div>
     </div>
   </div>
 
-  <!-- 비밀번호 변경 -->
+  <!-- 이메일 수정 -->
   <div class="section">
     <div class="card">
-      <p class="section-title">비밀번호 변경</p>
-      <div id="pwSuccess" class="success-msg" style="display:none"></div>
-      <div id="pwError"   class="error-msg"   style="display:none"></div>
+      <p class="section-title">📬 이메일 수정</p>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;line-height:1.6">
+        교육 자료 및 안내 정보를 받으실 이메일 주소입니다.<br>
+        🔒 수집된 이메일은 「개인정보 보호법」에 따라 보호됩니다.
+      </p>
+      <div id="emailSuccess" class="success-msg" style="display:none"></div>
+      <div id="emailError"   class="error-msg"   style="display:none"></div>
       <div class="form-group">
-        <label>새 비밀번호</label>
-        <input type="password" id="newPw" class="input-field" placeholder="6자 이상 입력">
-      </div>
-      <div class="form-group">
-        <label>새 비밀번호 확인</label>
-        <input type="password" id="newPw2" class="input-field" placeholder="비밀번호를 다시 입력">
+        <label>이메일</label>
+        <input type="email" id="emailInput" class="input-field" placeholder="이메일 주소를 입력하세요">
       </div>
       <div class="btn-row">
-        <button class="btn-primary" onclick="savePassword()">변경</button>
+        <button class="btn-primary" onclick="saveEmail()">저장</button>
       </div>
     </div>
-  </div>
-
-  <!-- 회원 탈퇴 -->
-  <div class="danger-zone">
-    <p class="danger-title">⚠️ 회원 탈퇴</p>
-    <p class="danger-desc">
-      탈퇴하면 계정 정보가 삭제되며 복구할 수 없습니다.<br>
-      수강 이력 등 관련 데이터도 함께 삭제될 수 있습니다.
-    </p>
-    <button class="btn-delete" onclick="deleteAccount()">회원 탈퇴</button>
   </div>
 </div>
 
@@ -79,95 +56,43 @@
 <script src="common.js"></script>
 <script>
   injectStyles();
+  const fmt = d => d ? new Date(d).toLocaleDateString('ko-KR') : '-';
 
   (async () => {
     const user = await requireAuth();
     if (!user) return;
     renderSidebar('mypage.html');
 
-    // 현재 정보 채우기
-    document.getElementById('currentEmail').value = user.email ?? '';
-    document.getElementById('fullname').value = user.user_metadata?.full_name ?? '';
+    const { data } = await sb.from('edu_students').select('*').eq('id', user.id).single();
+    if (!data) return;
+
+    document.getElementById('emailInput').value = data.email ?? '';
+
+    document.getElementById('infoArea').innerHTML = `
+      <div class="info-row"><span class="info-label">이름</span><span class="info-value">${data.name}</span></div>
+      <div class="info-row"><span class="info-label">생년월일</span><span class="info-value">${fmt(data['생년월일'])}</span></div>
+      <div class="info-row"><span class="info-label">기수</span><span class="info-value">${data['su료_기수']||'-'}</span></div>
+      <div class="info-row"><span class="info-label">수강기간</span><span class="info-value">${fmt(data['수강_시작일'])} ~ ${fmt(data['su료_일'])}</span></div>
+      <div class="info-row"><span class="info-label">수료시간</span><span class="info-value">${data.수료시간 ? data.수료시간+'시간' : '-'}</span></div>
+    `;
   })();
 
-  // 이름 저장
-  async function saveName() {
-    const fullname = document.getElementById('fullname').value.trim();
-    const suc = document.getElementById('nameSuccess');
-    const err = document.getElementById('nameError');
-    suc.style.display = 'none'; err.style.display = 'none';
+  async function saveEmail() {
+    const email = document.getElementById('emailInput').value.trim();
+    const suc   = document.getElementById('emailSuccess');
+    const err   = document.getElementById('emailError');
+    suc.style.display='none'; err.style.display='none';
 
-    if (!fullname) {
-      err.textContent = '이름을 입력해주세요.';
-      err.style.display = 'block'; return;
+    if (!email || !email.includes('@')) {
+      err.textContent='올바른 이메일 주소를 입력해주세요.';
+      err.style.display='block'; return;
     }
 
-    const { error } = await sb.auth.updateUser({
-      data: { full_name: fullname }
-    });
-
-    if (error) {
-      err.textContent = '저장 실패: ' + error.message;
-      err.style.display = 'block'; return;
-    }
-
-    suc.textContent = '✅ 이름이 저장되었습니다.';
-    suc.style.display = 'block';
-  }
-
-  // 비밀번호 변경
-  async function savePassword() {
-    const pw  = document.getElementById('newPw').value;
-    const pw2 = document.getElementById('newPw2').value;
-    const suc = document.getElementById('pwSuccess');
-    const err = document.getElementById('pwError');
-    suc.style.display = 'none'; err.style.display = 'none';
-
-    if (pw.length < 6) {
-      err.textContent = '비밀번호는 6자 이상이어야 합니다.';
-      err.style.display = 'block'; return;
-    }
-    if (pw !== pw2) {
-      err.textContent = '비밀번호가 일치하지 않습니다.';
-      err.style.display = 'block'; return;
-    }
-
-    const { error } = await sb.auth.updateUser({ password: pw });
-
-    if (error) {
-      err.textContent = '변경 실패: ' + error.message;
-      err.style.display = 'block'; return;
-    }
-
-    suc.textContent = '✅ 비밀번호가 변경되었습니다.';
-    suc.style.display = 'block';
-    document.getElementById('newPw').value = '';
-    document.getElementById('newPw2').value = '';
-  }
-
-  // 회원 탈퇴
-  async function deleteAccount() {
-    if (!confirm('정말 탈퇴하시겠습니까?\n탈퇴 후 복구할 수 없습니다.')) return;
-
-    const { data: { user } } = await sb.auth.getUser();
-
-    // 본인 수강 데이터 삭제
-    await sb.from('edu_students').delete().eq('user_id', user.id);
-
-    // Supabase Auth 계정 삭제 (admin 권한 필요 시 아래 방법 사용)
-    const { error } = await sb.rpc('delete_user');
-
-    if (error) {
-      // rpc 없을 경우 로그아웃만 처리 후 안내
-      await sb.auth.signOut();
-      alert('계정 삭제 요청이 접수되었습니다. 관리자가 최종 처리합니다.');
-      location.href = 'login.html';
-      return;
-    }
-
-    await sb.auth.signOut();
-    alert('탈퇴가 완료되었습니다.');
-    location.href = 'login.html';
+    const studentId = sessionStorage.getItem('student_id');
+    const { error } = await sb.from('edu_students').update({ email }).eq('id', studentId);
+    if (error) { err.textContent='저장 실패: '+error.message; err.style.display='block'; return; }
+    suc.textContent='✅ 이메일이 저장되었습니다.';
+    suc.style.display='block';
   }
 </script>
 </body>

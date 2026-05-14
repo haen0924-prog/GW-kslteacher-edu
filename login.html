@@ -7,73 +7,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --blue: #2563eb; --blue-dark: #1d4ed8;
-    --gray-300: #d1d5db; --gray-500: #6b7280;
-    --gray-700: #374151; --gray-900: #111827;
-    --red: #ef4444; --red-light: #fef2f2;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;
-  }
-  /* 상단 기관명 바 */
-  .top-bar {
-    width: 100%; max-width: 480px;
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1rem; padding: 0 0.25rem;
-  }
-  .top-bar-left  { font-size: 0.8rem; font-weight: 600; color: #1e40af; }
-  .top-bar-right { font-size: 0.8rem; font-weight: 600; color: #1e40af; text-align: right; }
-
-  .card {
-    background: white; border-radius: 1.25rem;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    width: 100%; max-width: 420px; padding: 2.5rem;
-    animation: fadeUp 0.4s ease;
-  }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  :root { --blue:#2563eb; --blue-dark:#1d4ed8; --gray-300:#d1d5db; --gray-500:#6b7280; --gray-700:#374151; --gray-900:#111827; --red:#ef4444; --red-light:#fef2f2; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Noto Sans KR',sans-serif; background:linear-gradient(135deg,#eff6ff 0%,#e0e7ff 100%); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1rem; }
+  .top-bar { width:100%; max-width:480px; display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:0 0.25rem; }
+  .top-bar-left  { font-size:0.8rem; font-weight:600; color:#1e40af; }
+  .top-bar-right { font-size:0.8rem; font-weight:600; color:#1e40af; text-align:right; }
+  .card { background:white; border-radius:1.25rem; box-shadow:0 10px 40px rgba(0,0,0,0.1); width:100%; max-width:420px; padding:2.5rem; animation:fadeUp 0.4s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
   .logo { display:flex; flex-direction:column; align-items:center; margin-bottom:2rem; }
-  .logo-icon {
-    width: auto; min-width: 56px; padding: 0 1rem;
-    height: 56px; background: var(--blue); border-radius: 1rem;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem; font-weight: 700; color: white;
-    margin-bottom: 1rem; text-align: center; line-height: 1.3;
-    white-space: nowrap;
-  }
-  .logo h1 { font-size: 1.3rem; font-weight: 700; color: var(--gray-900); text-align: center; }
-  .logo p  { font-size: 0.85rem; color: var(--gray-500); margin-top: 0.25rem; }
+  .logo-icon { width:auto; min-width:56px; padding:0 1rem; height:56px; background:var(--blue); border-radius:1rem; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; color:white; margin-bottom:1rem; white-space:nowrap; }
+  .logo h1 { font-size:1.3rem; font-weight:700; color:var(--gray-900); }
+  .logo p  { font-size:0.85rem; color:var(--gray-500); margin-top:0.25rem; }
+  .tab-wrap { display:flex; background:#f3f4f6; border-radius:0.625rem; padding:0.25rem; margin-bottom:1.5rem; }
+  .tab { flex:1; padding:0.5rem; text-align:center; font-size:0.875rem; font-weight:500; color:#6b7280; border-radius:0.375rem; cursor:pointer; transition:all 0.2s; border:none; background:none; font-family:inherit; }
+  .tab.active { background:white; color:#111827; font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .panel { display:none; }
+  .panel.active { display:block; }
   label { display:block; font-size:0.875rem; font-weight:500; color:var(--gray-700); margin-bottom:0.375rem; }
-  input[type=email], input[type=password] {
-    width:100%; padding:0.625rem 0.875rem; border:1.5px solid var(--gray-300);
-    border-radius:0.5rem; font-size:0.95rem; font-family:inherit; outline:none;
-    transition:border-color 0.2s; margin-bottom:1rem;
-  }
+  input { width:100%; padding:0.625rem 0.875rem; border:1.5px solid var(--gray-300); border-radius:0.5rem; font-size:0.95rem; font-family:inherit; outline:none; transition:border-color 0.2s; margin-bottom:1rem; }
   input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
   .btn { width:100%; padding:0.75rem; background:var(--blue); color:white; border:none; border-radius:0.625rem; font-size:1rem; font-weight:600; font-family:inherit; cursor:pointer; transition:background 0.2s; margin-top:0.5rem; }
   .btn:hover { background:var(--blue-dark); }
-  .btn:active { transform:scale(0.98); }
   .btn:disabled { opacity:0.6; cursor:not-allowed; }
   .error { background:var(--red-light); color:var(--red); font-size:0.85rem; padding:0.625rem 0.875rem; border-radius:0.5rem; margin-bottom:1rem; display:none; }
-  .footer-link { text-align:center; font-size:0.875rem; color:var(--gray-500); margin-top:1.5rem; }
-  .footer-link a { color:var(--blue); font-weight:500; text-decoration:none; }
-  .footer-link a:hover { text-decoration:underline; }
   .forgot-link { text-align:right; margin-top:0.5rem; }
   .forgot-link a { font-size:0.8rem; color:var(--gray-500); text-decoration:none; }
-  .forgot-link a:hover { color:var(--blue); text-decoration:underline; }
+  .forgot-link a:hover { color:var(--blue); }
 </style>
 </head>
 <body>
-
-<!-- 상단 기관명 -->
 <div class="top-bar">
   <span class="top-bar-left">한국수어교육원</span>
   <span class="top-bar-right">강원특별자치도수어문화원</span>
 </div>
-
 <div class="card">
   <div class="logo">
     <div class="logo-icon">한국수어교원 양성과정</div>
@@ -81,21 +48,32 @@
     <p>로그인하여 학습 현황을 확인하세요</p>
   </div>
 
-  <div class="error" id="errorMsg"></div>
+  <!-- 탭 -->
+  <div class="tab-wrap">
+    <button class="tab active" onclick="switchTab('student')">수강생 로그인</button>
+    <button class="tab" onclick="switchTab('admin')">관리자 로그인</button>
+  </div>
 
-  <label for="email">이메일</label>
-  <input type="email" id="email" placeholder="example@email.com">
+  <!-- 수강생 로그인 -->
+  <div class="panel active" id="panel-student">
+    <div class="error" id="studentError"></div>
+    <label>이름</label>
+    <input type="text" id="s_name" placeholder="홍길동">
+    <label>생년월일</label>
+    <input type="date" id="s_birth">
+    <button class="btn" onclick="studentLogin()">로그인</button>
+  </div>
 
-  <label for="password">비밀번호</label>
-  <input type="password" id="password" placeholder="비밀번호를 입력하세요">
-
-  <button class="btn" id="loginBtn" onclick="login()">로그인</button>
-
-  <p class="forgot-link"><a href="forgot-password.html">비밀번호를 잊으셨나요?</a></p>
-
-  <p class="footer-link">
-    계정이 없으신가요? <a href="signup.html">회원가입</a>
-  </p>
+  <!-- 관리자 로그인 -->
+  <div class="panel" id="panel-admin">
+    <div class="error" id="adminError"></div>
+    <label>이메일</label>
+    <input type="email" id="a_email" placeholder="admin@example.com">
+    <label>비밀번호</label>
+    <input type="password" id="a_password" placeholder="비밀번호 입력">
+    <button class="btn" onclick="adminLogin()">관리자 로그인</button>
+    <p class="forgot-link"><a href="forgot-password.html">비밀번호를 잊으셨나요?</a></p>
+  </div>
 </div>
 
 <script src="config.js"></script>
@@ -103,31 +81,74 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // 이미 로그인된 경우
+  const si = sessionStorage.getItem('student_id');
+  if (si) location.href = 'dashboard.html';
   sb.auth.getSession().then(({ data }) => {
     if (data.session) location.href = 'dashboard.html';
   });
 
-  async function login() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('loginBtn');
-    const err = document.getElementById('errorMsg');
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+  }
 
+  // 수강생 로그인 (이름 + 생년월일)
+  async function studentLogin() {
+    const name  = document.getElementById('s_name').value.trim();
+    const birth = document.getElementById('s_birth').value;
+    const err   = document.getElementById('studentError');
     err.style.display = 'none';
-    btn.disabled = true; btn.textContent = '로그인 중...';
 
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
-      err.style.display = 'block';
-      btn.disabled = false; btn.textContent = '로그인';
-      return;
+    if (!name || !birth) {
+      err.textContent = '이름과 생년월일을 입력해주세요.';
+      err.style.display = 'block'; return;
     }
+
+    const { data, error } = await sb.from('edu_students')
+      .select('*')
+      .eq('name', name)
+      .eq('생년월일', birth)
+      .single();
+
+    if (error || !data) {
+      err.textContent = '이름 또는 생년월일이 일치하지 않습니다.';
+      err.style.display = 'block'; return;
+    }
+
+    // 세션에 수강생 정보 저장
+    sessionStorage.setItem('student_id', data.id);
+    sessionStorage.setItem('student_name', data.name);
+    sessionStorage.setItem('is_admin', 'false');
     location.href = 'dashboard.html';
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  // 관리자 로그인
+  async function adminLogin() {
+    const email    = document.getElementById('a_email').value.trim();
+    const password = document.getElementById('a_password').value;
+    const err      = document.getElementById('adminError');
+    err.style.display = 'none';
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      err.style.display = 'block'; return;
+    }
+
+    sessionStorage.setItem('is_admin', 'true');
+    location.href = 'dashboard.html';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const activePanel = document.querySelector('.panel.active').id;
+      if (activePanel === 'panel-student') studentLogin();
+      else adminLogin();
+    }
+  });
 </script>
 </body>
 </html>
