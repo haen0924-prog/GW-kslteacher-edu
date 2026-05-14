@@ -135,7 +135,7 @@
       const { error: insertError } = await sb.from('edu_students').insert({
         user_id: userId,
         name: fullname,
-        '수료_기수': gisu || null,
+        'su료_기수': gisu || null,
       });
       if (insertError) {
         err.textContent = '수강생 등록 오류: ' + insertError.message;

@@ -53,9 +53,9 @@
     const fmt = d => d ? new Date(d).toLocaleDateString('ko-KR') : '-';
 
     el.innerHTML = data.map(s => {
-      const gisu      = s['수료_기수'];
+      const gisu      = s['su료_기수'];
       const startDate = s['수강_시작일'];
-      const endDate   = s['수료_일'];
+      const endDate   = s['su료_일'];
 
       // 수강 상태 판단
       let status = '수강중';
