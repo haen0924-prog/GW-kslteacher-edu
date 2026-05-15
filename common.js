@@ -39,11 +39,11 @@ function isAdminUser() {
   return currentStudent?.isAdmin === true;
 }
 
-function logout() {
+async function logout() {
   sessionStorage.clear();
   localStorage.removeItem('student_id');
   localStorage.removeItem('student_name');
-  sb.auth.signOut();
+  await sb.auth.signOut();
   location.href = 'login.html';
 }
 function renderSidebar(activePage) {
