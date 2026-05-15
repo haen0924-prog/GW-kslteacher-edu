@@ -47,14 +47,10 @@
     <h1>수강생 관리 시스템</h1>
     <p>로그인하여 학습 현황을 확인하세요</p>
   </div>
-
-  <!-- 탭 -->
   <div class="tab-wrap">
-    <button class="tab active" onclick="switchTab('student')">수강생 로그인</button>
-    <button class="tab" onclick="switchTab('admin')">관리자 로그인</button>
+    <button class="tab active" id="tab-student" onclick="switchTab('student')">수강생 로그인</button>
+    <button class="tab" id="tab-admin" onclick="switchTab('admin')">관리자 로그인</button>
   </div>
-
-  <!-- 수강생 로그인 -->
   <div class="panel active" id="panel-student">
     <div class="error" id="studentError"></div>
     <label>이름</label>
@@ -63,8 +59,6 @@
     <input type="date" id="s_birth">
     <button class="btn" onclick="studentLogin()">로그인</button>
   </div>
-
-  <!-- 관리자 로그인 -->
   <div class="panel" id="panel-admin">
     <div class="error" id="adminError"></div>
     <label>이메일</label>
@@ -75,78 +69,56 @@
     <p class="forgot-link"><a href="forgot-password.html">비밀번호를 잊으셨나요?</a></p>
   </div>
 </div>
-
 <script src="config.js"></script>
 <script>
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // 이미 로그인된 경우
   const si = sessionStorage.getItem('student_id');
   if (si) location.href = 'dashboard.html';
-  sb.auth.getSession().then(({ data }) => {
-    if (data.session) location.href = 'dashboard.html';
+  sb.auth.getSession().then(function(res) {
+    if (res.data.session) location.href = 'dashboard.html';
   });
 
   function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-student').classList.remove('active');
+    document.getElementById('tab-admin').classList.remove('active');
+    document.getElementById('panel-student').classList.remove('active');
+    document.getElementById('panel-admin').classList.remove('active');
+    document.getElementById('tab-' + tab).classList.add('active');
     document.getElementById('panel-' + tab).classList.add('active');
-    event.target.classList.add('active');
   }
 
-  // 수강생 로그인 (이름 + 생년월일)
-  async function student로그인() {
-    const name  = document.getElementById('s_name').value.trim();
-    const birth = document.getElementById('s_birth').value;
-    const err   = document.getElementById('studentError');
+  async function studentLogin() {
+    var name  = document.getElementById('s_name').value.trim();
+    var birth = document.getElementById('s_birth').value;
+    var err   = document.getElementById('studentError');
     err.style.display = 'none';
-
-    if (!name || !birth) {
-      err.textContent = '이름과 생년월일을 입력해주세요.';
-      err.style.display = 'block'; return;
-    }
-
-    const { data, error } = await sb.from('edu_students')
-      .select('*')
-      .eq('name', name)
-      .eq('생년월일', birth)
-      .single();
-
-    if (error || !data) {
-      err.textContent = '이름 또는 생년월일이 일치하지 않습니다.';
-      err.style.display = 'block'; return;
-    }
-
-    // 세션에 수강생 정보 저장
-    sessionStorage.setItem('student_id', data.id);
-    sessionStorage.setItem('student_name', data.name);
+    if (!name || !birth) { err.textContent = '이름과 생년월일을 입력해주세요.'; err.style.display = 'block'; return; }
+    var res = await sb.from('edu_students').select('*').eq('name', name).eq('생년월일', birth).single();
+    if (res.error || !res.data) { err.textContent = '이름 또는 생년월일이 일치하지 않습니다.'; err.style.display = 'block'; return; }
+    sessionStorage.setItem('student_id', res.data.id);
+    sessionStorage.setItem('student_name', res.data.name);
     sessionStorage.setItem('is_admin', 'false');
     location.href = 'dashboard.html';
   }
 
-  // 관리자 로그인
-  async function admin로그인() {
-    const email    = document.getElementById('a_email').value.trim();
-    const password = document.getElementById('a_password').value;
-    const err      = document.getElementById('adminError');
+  async function adminLogin() {
+    var email    = document.getElementById('a_email').value.trim();
+    var password = document.getElementById('a_password').value;
+    var err      = document.getElementById('adminError');
     err.style.display = 'none';
-
-    const { error } = await sb.auth.signInWith비밀번호({ email, password });
-    if (error) {
-      err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
-      err.style.display = 'block'; return;
-    }
-
+    var res = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (res.error) { err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.'; err.style.display = 'block'; return; }
     sessionStorage.setItem('is_admin', 'true');
     location.href = 'dashboard.html';
   }
 
-  document.addEventListener('keydown', e => {
+  document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-      const activePanel = document.querySelector('.panel.active').id;
-      if (activePanel === 'panel-student') student로그인();
-      else admin로그인();
+      var activePanel = document.querySelector('.panel.active').id;
+      if (activePanel === 'panel-student') studentLogin();
+      else adminLogin();
     }
   });
 </script>
