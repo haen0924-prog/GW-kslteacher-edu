@@ -69,7 +69,7 @@
       return;
     }
 
-    const { data } = await sb.from('edu_students').select('*').eq('id', studentId).single();
+    const { data } = await sb.from('edu_students').select('*, edu_courses(*)').eq('id', studentId).single();
 
     if (!data) {
       document.getElementById('infoArea').innerHTML = '<div style="color:#9ca3af;font-size:0.875rem">정보를 불러올 수 없습니다.</div>';
@@ -77,12 +77,15 @@
     }
 
     document.getElementById('emailInput').value = data.email ?? '';
+    const courses = data.edu_courses ?? [];
+    const totalHours = courses.reduce((sum, c) => sum + (c.수료시간 || 0), 0);
+    const firstCourse = courses[0];
     document.getElementById('infoArea').innerHTML = `
-      <div class="info-row"><span class="info-label">이름</span><span class="info-value">${data.name}</span></div>
+      <div class="info-row"><span class="info-label">이름</span><span class="info-value">${data.name || '-'}</span></div>
       <div class="info-row"><span class="info-label">생년월일</span><span class="info-value">${fmt(data.birthdate)}</span></div>
-      <div class="info-row"><span class="info-label">기수</span><span class="info-value">${data['su료_기수'] || '-'}</span></div>
-      <div class="info-row"><span class="info-label">수강기간</span><span class="info-value">${fmt(data['수강_시작일'])} ~ ${fmt(data['su료_일'])}</span></div>
-      <div class="info-row"><span class="info-label">수료시간</span><span class="info-value">${data.수료시간 ? data.수료시간 + '시간' : '-'}</span></div>
+      <div class="info-row"><span class="info-label">기수</span><span class="info-value">${firstCourse ? (firstCourse.기수 || '-') : '-'}</span></div>
+      <div class="info-row"><span class="info-label">수강기간</span><span class="info-value">${firstCourse ? fmt(firstCourse.수강_시작일) + ' ~ ' + fmt(firstCourse.수강_종료일) : '- ~ -'}</span></div>
+      <div class="info-row"><span class="info-label">수료시간</span><span class="info-value">${totalHours ? totalHours + '시간' : '-'}</span></div>
     `;
   })();
 
