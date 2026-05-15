@@ -374,7 +374,7 @@
 
       // 기존 수강생 확인 (이름+생년월일)
       let { data: existing } = await sb.from('edu_students')
-        .select('id').eq('name', row.name).eq('생년월일', row.birth).single();
+        .select('id').eq('name', row.name).eq('birthdate', row.birth).single();
 
       let studentId = existing?.id;
 
