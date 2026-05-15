@@ -21,22 +21,21 @@
   .list-item a { font-size:0.875rem; color:#374151; text-decoration:none; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:1rem; }
   .list-item a:hover { color:#2563eb; }
   .list-date { font-size:0.75rem; color:#9ca3af; flex-shrink:0; }
-
-  /* 이메일 수집 팝업 */
+  .student-row { display:flex; align-items:center; gap:0.75rem; padding:0.625rem 0; border-bottom:1px solid #f9fafb; }
+  .student-row:last-child { border-bottom:none; }
+  .student-avatar { width:32px; height:32px; background:#dbeafe; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; color:#1d4ed8; flex-shrink:0; }
+  .student-name { font-size:0.875rem; font-weight:500; color:#111827; }
+  .student-sub  { font-size:0.75rem; color:#9ca3af; }
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem; }
-  .popup { background:white; border-radius:1.25rem; padding:2rem; max-width:440px; width:100%; animation:fadeUp 0.3s ease; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .popup { background:white; border-radius:1.25rem; padding:2rem; max-width:440px; width:100%; }
   .popup-title { font-size:1.2rem; font-weight:700; color:#111827; margin-bottom:0.5rem; }
   .popup-desc  { font-size:0.875rem; color:#6b7280; line-height:1.7; margin-bottom:1.25rem; }
   .privacy-note { font-size:0.75rem; color:#9ca3af; background:#f9fafb; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.25rem; line-height:1.6; }
   .popup-input { width:100%; padding:0.625rem 0.875rem; border:1.5px solid #d1d5db; border-radius:0.5rem; font-size:0.95rem; font-family:inherit; outline:none; margin-bottom:1rem; }
-  .popup-input:focus { border-color:#2563eb; }
   .popup-btns { display:flex; gap:0.75rem; }
   .popup-btns button { flex:1; padding:0.7rem; border:none; border-radius:0.625rem; font-size:0.9rem; font-weight:600; font-family:inherit; cursor:pointer; }
   .btn-submit { background:#2563eb; color:white; }
-  .btn-submit:hover { background:#1d4ed8; }
   .btn-skip   { background:#f3f4f6; color:#374151; }
-  .btn-skip:hover { background:#e5e7eb; }
   @media (max-width:900px) { .stats-grid{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:1fr;} }
 </style>
 </head>
@@ -45,34 +44,16 @@
 <div id="main">
   <h1 class="page-title">🏠 대시보드</h1>
   <p class="page-sub" id="greeting">안녕하세요!</p>
-
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon" style="background:#eff6ff">📚</div><div><div class="stat-value" id="s1">-</div><div class="stat-label">내 기수</div></div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4">⏱️</div><div><div class="stat-value" id="s2">-</div><div class="stat-label">수료시간</div></div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#fefce8">📢</div><div><div class="stat-value" id="s3">-</div><div class="stat-label">공지사항</div></div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:#fdf4ff">💬</div><div><div class="stat-value" id="s4">-</div><div class="stat-label">게시글</div></div></div>
-  </div>
-
-  <div class="two-col">
-    <div class="card">
-      <div class="section-header"><h2>최근 공지사항</h2><a href="notices.html">전체보기 →</a></div>
-      <div id="noticeList"><div style="color:#9ca3af;font-size:0.875rem">불러오는 중...</div></div>
-    </div>
-    <div class="card">
-      <div class="section-header"><h2>최근 게시글</h2><a href="board.html">전체보기 →</a></div>
-      <div id="postList"><div style="color:#9ca3af;font-size:0.875rem">불러오는 중...</div></div>
-    </div>
-  </div>
+  <div id="adminDash"   style="display:none"></div>
+  <div id="studentDash" style="display:none"></div>
 </div>
 
-<!-- 이메일 수집 팝업 -->
+<!-- 이메일 수집 팝업 (수강생용) -->
 <div class="overlay" id="emailPopup" style="display:none">
   <div class="popup">
     <div style="font-size:2rem;margin-bottom:0.75rem">📬</div>
     <p class="popup-title">교육 자료 및 정보 수신</p>
-    <p class="popup-desc">
-      한국수어교원 양성과정 관련 교육 자료, 공지사항 및 안내 정보를 이메일로 받아보시겠습니까?
-    </p>
+    <p class="popup-desc">한국수어교원 양성과정 관련 교육 자료, 공지사항 및 안내 정보를 이메일로 받아보시겠습니까?</p>
     <div class="privacy-note">
       🔒 <strong>개인정보 보호 안내</strong><br>
       수집된 이메일 주소는 교육 관련 정보 제공 목적으로만 사용되며, 「개인정보 보호법」 및 관련 법령에 따라 안전하게 보호됩니다. 동의하지 않으셔도 서비스 이용에 불이익이 없습니다.
@@ -98,53 +79,116 @@
     renderSidebar('dashboard.html');
     document.getElementById('greeting').textContent = '안녕하세요, ' + user.name + ' 님';
 
-    // 이메일 팝업 — 수강생만, 아직 안 보여줬을 때만
-    if (!isAdminUser() && !sessionStorage.getItem('email_popup_shown')) {
+    if (isAdminUser()) {
+      loadAdminDash();
+    } else {
+      loadStudentDash(user);
+    }
+  })();
+
+  // 관리자 대시보드
+  async function loadAdminDash() {
+    document.getElementById('adminDash').style.display = 'block';
+
+    const [students, notices, posts] = await Promise.all([
+      sb.from('edu_students').select('id, name, 생년월일, created_at').order('created_at', { ascending: false }).limit(10),
+      sb.from('edu_notices').select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
+      sb.from('edu_posts').select('id, title, created_at').order('created_at', { ascending: false }).limit(5),
+    ]);
+
+    const { count: totalStudents } = await sb.from('edu_students').select('*', { count: 'exact', head: true });
+    const { count: totalNotices  } = await sb.from('edu_notices').select('*', { count: 'exact', head: true });
+    const { count: totalPosts    } = await sb.from('edu_posts').select('*', { count: 'exact', head: true });
+
+    document.getElementById('adminDash').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#eff6ff">👥</div><div><div class="stat-value">${totalStudents ?? 0}</div><div class="stat-label">전체 수강생</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fefce8">📢</div><div><div class="stat-value">${totalNotices ?? 0}</div><div class="stat-label">공지사항</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fdf4ff">💬</div><div><div class="stat-value">${totalPosts ?? 0}</div><div class="stat-label">게시글</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4">📊</div><div><div class="stat-value">${(students.data?.length ?? 0)}</div><div class="stat-label">최근 입력</div></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-header">
+            <h2>최근 등록된 수강생</h2>
+            <a href="admin.html">전체보기 →</a>
+          </div>
+          ${students.data?.length ? students.data.map(s => `
+            <div class="student-row">
+              <div class="student-avatar">${s.name[0]}</div>
+              <div>
+                <div class="student-name">${s.name}</div>
+                <div class="student-sub">${s.생년월일 ? new Date(s.생년월일).toLocaleDateString('ko-KR') : '-'} 등록: ${fmt(s.created_at)}</div>
+              </div>
+            </div>`).join('') : '<div style="color:#9ca3af;font-size:0.875rem">등록된 수강생이 없습니다.</div>'}
+        </div>
+        <div class="card">
+          <div class="section-header">
+            <h2>최근 공지사항</h2>
+            <a href="notices-admin.html">관리 →</a>
+          </div>
+          ${notices.data?.length ? notices.data.map(n => `
+            <div class="list-item">
+              <a href="notices-admin.html">${n.title}</a>
+              <span class="list-date">${fmt(n.created_at)}</span>
+            </div>`).join('') : '<div style="color:#9ca3af;font-size:0.875rem">공지사항이 없습니다.</div>'}
+          <div style="margin-top:1rem">
+            <a href="notices-admin.html" class="btn-primary" style="width:100%;justify-content:center">📢 공지사항 등록</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // 수강생 대시보드
+  async function loadStudentDash(user) {
+    document.getElementById('studentDash').style.display = 'block';
+
+    // 이메일 팝업
+    if (!sessionStorage.getItem('email_popup_shown')) {
       const { data: sd } = await sb.from('edu_students').select('email').eq('id', user.id).single();
-      if (!sd?.email) {
-        document.getElementById('emailPopup').style.display = 'flex';
-      }
+      if (!sd?.email) document.getElementById('emailPopup').style.display = 'flex';
       sessionStorage.setItem('email_popup_shown', 'true');
     }
 
-    // 내 수강 정보
-    const { data: myData } = await sb.from('edu_students').select('*').eq('id', user.id).single();
-    document.getElementById('s1').textContent = myData?.['su료_기수'] ?? '-';
-    document.getElementById('s2').textContent = myData?.수료시간 ? myData.수료시간+'h' : '-';
-
-    const [notices, posts] = await Promise.all([
+    const [myData, notices, posts] = await Promise.all([
+      sb.from('edu_students').select('*, edu_courses(*)').eq('id', user.id).single(),
       sb.from('edu_notices').select('id,title,created_at').order('created_at',{ascending:false}).limit(5),
       sb.from('edu_posts').select('id,title,created_at').order('created_at',{ascending:false}).limit(5),
     ]);
 
-    document.getElementById('s3').textContent = notices.data?.length ?? 0;
-    document.getElementById('s4').textContent = posts.data?.length ?? 0;
+    const courses     = myData.data?.edu_courses ?? [];
+    const totalHours  = courses.reduce((s, c) => s + (c.수료시간 || 0), 0);
 
-    const noticeEl = document.getElementById('noticeList');
-    noticeEl.innerHTML = notices.data?.length
-      ? notices.data.map(n=>`<div class="list-item"><a href="notices.html">${n.title}</a><span class="list-date">${fmt(n.created_at)}</span></div>`).join('')
-      : '<div style="color:#9ca3af;font-size:0.875rem">공지사항이 없습니다.</div>';
-
-    const postEl = document.getElementById('postList');
-    postEl.innerHTML = posts.data?.length
-      ? posts.data.map(p=>`<div class="list-item"><a href="post.html?id=${p.id}">${p.title}</a><span class="list-date">${fmt(p.created_at)}</span></div>`).join('')
-      : '<div style="color:#9ca3af;font-size:0.875rem">게시글이 없습니다.</div>';
-  })();
-
-  function skipEmail() {
-    document.getElementById('emailPopup').style.display = 'none';
+    document.getElementById('studentDash').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#eff6ff">📚</div><div><div class="stat-value">${courses.length}</div><div class="stat-label">수강 과정</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f0fdf4">⏱️</div><div><div class="stat-value">${totalHours}h</div><div class="stat-label">총 수료시간</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fefce8">📢</div><div><div class="stat-value">${notices.data?.length ?? 0}</div><div class="stat-label">공지사항</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fdf4ff">💬</div><div><div class="stat-value">${posts.data?.length ?? 0}</div><div class="stat-label">게시글</div></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-header"><h2>최근 공지사항</h2><a href="notices.html">전체보기 →</a></div>
+          ${notices.data?.length ? notices.data.map(n=>`
+            <div class="list-item"><a href="notices.html">${n.title}</a><span class="list-date">${fmt(n.created_at)}</span></div>`).join('')
+            : '<div style="color:#9ca3af;font-size:0.875rem">공지사항이 없습니다.</div>'}
+        </div>
+        <div class="card">
+          <div class="section-header"><h2>최근 게시글</h2><a href="board.html">전체보기 →</a></div>
+          ${posts.data?.length ? posts.data.map(p=>`
+            <div class="list-item"><a href="post.html?id=${p.id}">${p.title}</a><span class="list-date">${fmt(p.created_at)}</span></div>`).join('')
+            : '<div style="color:#9ca3af;font-size:0.875rem">게시글이 없습니다.</div>'}
+        </div>
+      </div>`;
   }
+
+  function skipEmail() { document.getElementById('emailPopup').style.display = 'none'; }
 
   async function submitEmail() {
     const email = document.getElementById('popupEmail').value.trim();
     const errEl = document.getElementById('popupError');
     errEl.style.display = 'none';
-
-    if (!email || !email.includes('@')) {
-      errEl.textContent = '올바른 이메일 주소를 입력해주세요.';
-      errEl.style.display = 'block'; return;
-    }
-
+    if (!email || !email.includes('@')) { errEl.textContent = '올바른 이메일 주소를 입력해주세요.'; errEl.style.display='block'; return; }
     const studentId = sessionStorage.getItem('student_id');
     await sb.from('edu_students').update({ email }).eq('id', studentId);
     document.getElementById('emailPopup').style.display = 'none';

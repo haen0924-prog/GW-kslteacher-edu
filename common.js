@@ -49,7 +49,7 @@ function renderSidebar(activePage) {
   const name    = currentStudent?.name ?? '';
   const admin   = isAdminUser();
 
-  const navItems = [
+  const studentNav = [
     { href:'dashboard.html',  label:'대시보드',   icon:'🏠' },
     { href:'notices.html',    label:'공지사항',   icon:'📢' },
     { href:'my-courses.html', label:'이수현황',   icon:'📚' },
@@ -57,17 +57,22 @@ function renderSidebar(activePage) {
     { href:'mypage.html',     label:'마이페이지', icon:'👤' },
   ];
 
+  const adminNav2 = [
+    { href:'dashboard.html',      label:'대시보드',     icon:'🏠' },
+    { href:'notices-admin.html',  label:'공지사항 관리', icon:'📢' },
+    { href:'board.html',          label:'자유게시판',   icon:'💬' },
+    { href:'admin.html',          label:'수강생 관리',   icon:'⚙️' },
+  ];
+
+  const navItems = admin ? adminNav2 : studentNav;
+
   const navHTML = navItems.map(item => `
     <a href="${item.href}" class="nav-item ${activePage===item.href?'active':''}">
       <span class="nav-icon">${item.icon}</span>
       <span>${item.label}</span>
     </a>`).join('');
 
-  const adminNav = admin ? `
-    <a href="admin.html" class="nav-item admin-item ${activePage==='admin.html'?'active-admin':''}">
-      <span class="nav-icon">⚙️</span>
-      <span>관리자 페이지</span>
-    </a>` : '';
+  const adminNav = '';
 
   document.getElementById('sidebar').innerHTML = `
     <div class="sidebar-logo">

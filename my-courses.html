@@ -7,14 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:0.75rem; margin-top:1rem; }
-  .info-item { background:#f9fafb; border-radius:0.5rem; padding:0.875rem 1rem; }
+  .course-card { background:white; border-radius:0.875rem; border:1px solid #f3f4f6; padding:1.5rem; box-shadow:0 1px 4px rgba(0,0,0,0.04); margin-bottom:1rem; }
+  .course-header { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .course-name { font-size:1.1rem; font-weight:600; color:#111827; }
+  .info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.75rem; }
+  .info-item { background:#f9fafb; border-radius:0.5rem; padding:0.75rem 1rem; }
   .info-label { font-size:0.75rem; color:#9ca3af; margin-bottom:0.25rem; }
-  .info-value { font-size:0.95rem; font-weight:600; color:#111827; }
-  .cert-box { background:linear-gradient(135deg,#1e40af,#2563eb); color:white; border-radius:1rem; padding:2rem; text-align:center; margin-top:1.5rem; }
-  .cert-title { font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; }
+  .info-value { font-size:0.9rem; font-weight:600; color:#111827; }
+  .cert-box { background:linear-gradient(135deg,#1e40af,#2563eb); color:white; border-radius:1rem; padding:1.5rem 2rem; text-align:center; margin-top:1rem; }
   .cert-hours { font-size:2.5rem; font-weight:700; }
   .cert-sub   { font-size:0.85rem; opacity:0.8; margin-top:0.25rem; }
+  .student-info { background:white; border-radius:0.875rem; border:1px solid #f3f4f6; padding:1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1.5rem; }
+  .student-avatar { width:56px; height:56px; background:#2563eb; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem; font-weight:700; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -37,38 +41,51 @@
     renderSidebar('my-courses.html');
 
     const { data } = await sb.from('edu_students')
-      .select('*').eq('id', user.id).single();
+      .select('*, edu_courses(*)')
+      .eq('id', user.id)
+      .single();
 
     const el = document.getElementById('content');
+
     if (!data) {
       el.innerHTML = '<div class="card" style="text-align:center;padding:3rem;color:#9ca3af">📚 등록된 수강 정보가 없습니다.<br><small>관리자에게 문의하세요.</small></div>';
       return;
     }
 
-    const gisu  = data['su료_기수'];
-    const end   = data['su료_일'];
-    const start = data['수강_시작일'];
-    const isComplete = end && new Date(end) < new Date();
+    const courses = data.edu_courses ?? [];
+    const totalHours = courses.reduce((sum, c) => sum + (c.수료시간 || 0), 0);
+
+    const courseHTML = courses.length ? courses.map(c => {
+      const isComplete = c.수강_종료일 && new Date(c.수강_종료일) < new Date();
+      return `
+        <div class="course-card">
+          <div class="course-header">
+            <span class="course-name">${c.교육명}</span>
+            ${c.기수 ? `<span class="badge badge-blue">${c.기수}</span>` : ''}
+            <span class="badge ${isComplete ? 'badge-green' : 'badge-blue'}">${isComplete ? '수료' : '수강중'}</span>
+          </div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">수강 시작일</div><div class="info-value">📅 ${fmt(c.수강_시작일)}</div></div>
+            <div class="info-item"><div class="info-label">수강 종료일</div><div class="info-value">📅 ${fmt(c.수강_종료일)}</div></div>
+            ${c.수료시간 ? `<div class="info-item"><div class="info-label">수료시간</div><div class="info-value">⏱️ ${c.수료시간}시간</div></div>` : ''}
+          </div>
+        </div>`;
+    }).join('') : '<div class="card" style="text-align:center;padding:2rem;color:#9ca3af">등록된 교육 이력이 없습니다.</div>';
 
     el.innerHTML = `
-      <div class="card">
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">
-          <span style="font-size:1.2rem;font-weight:700;color:#111827">${gisu ? gisu+' 수강생' : '수강생'}</span>
-          <span class="badge ${isComplete?'badge-green':'badge-blue'}">${isComplete?'수료':'수강중'}</span>
+      <div class="student-info">
+        <div class="student-avatar">${data.name[0]}</div>
+        <div>
+          <p style="font-size:1.2rem;font-weight:700;color:#111827">${data.name}</p>
+          <p style="font-size:0.875rem;color:#6b7280">생년월일: ${fmt(data.생년월일)}</p>
         </div>
-        <div class="info-grid">
-          <div class="info-item"><div class="info-label">이름</div><div class="info-value">👤 ${data.name}</div></div>
-          <div class="info-item"><div class="info-label">기수</div><div class="info-value">🏷️ ${gisu||'미설정'}</div></div>
-          <div class="info-item"><div class="info-label">수강 시작일</div><div class="info-value">📅 ${fmt(start)}</div></div>
-          <div class="info-item"><div class="info-label">수강 종료일</div><div class="info-value">📅 ${fmt(end)}</div></div>
-        </div>
-        ${data.수료시간 ? `
-        <div class="cert-box">
-          <div class="cert-title">🎓 수료 이수시간</div>
-          <div class="cert-hours">${data.수료시간}시간</div>
-          <div class="cert-sub">한국수어교원 양성과정 이수 완료</div>
+        ${totalHours > 0 ? `
+        <div class="cert-box" style="margin-left:auto;margin-top:0;flex-shrink:0">
+          <div style="font-size:0.85rem;opacity:0.8;margin-bottom:0.25rem">총 수료시간</div>
+          <div class="cert-hours">${totalHours}시간</div>
         </div>` : ''}
-      </div>`;
+      </div>
+      ${courseHTML}`;
   })();
 </script>
 </body>

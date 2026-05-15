@@ -6,10 +6,15 @@
 <title>관리자 — 한국수어교원 양성과정</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  .top-wrap { display:flex; gap:2rem; align-items:flex-start; margin-bottom:1.5rem; flex-wrap:wrap; }
-  .add-form { background:white; border-radius:0.875rem; border:1px solid #f3f4f6; padding:1.5rem; min-width:320px; flex:1; }
+  .tab-wrap { display:flex; background:#f3f4f6; border-radius:0.625rem; padding:0.25rem; margin-bottom:1.5rem; max-width:400px; }
+  .tab { flex:1; padding:0.5rem; text-align:center; font-size:0.875rem; font-weight:500; color:#6b7280; border-radius:0.375rem; cursor:pointer; border:none; background:none; font-family:inherit; transition:all 0.2s; }
+  .tab.active { background:white; color:#111827; font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+  .panel { display:none; }
+  .panel.active { display:block; }
   .form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.875rem; }
+  .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.875rem; }
   .form-group { margin-bottom:0.875rem; }
   select.input-field { background:white; }
   table { width:100%; border-collapse:collapse; background:white; border-radius:0.875rem; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
@@ -18,18 +23,26 @@
   td { padding:0.75rem 0.875rem; font-size:0.85rem; color:#374151; border-bottom:1px solid #f9fafb; vertical-align:middle; }
   tr:last-child td { border-bottom:none; }
   tr:hover td { background:#f8fafc; }
-  .edit-row td { background:#eff6ff !important; }
-  .input-sm { padding:0.35rem 0.5rem; border:1.5px solid #d1d5db; border-radius:0.375rem; font-size:0.8rem; font-family:inherit; outline:none; width:100%; }
-  .input-sm:focus { border-color:#2563eb; }
-  select.input-sm { background:white; }
   .btn-sm { padding:0.3rem 0.625rem; border:none; border-radius:0.375rem; font-size:0.75rem; font-weight:600; font-family:inherit; cursor:pointer; white-space:nowrap; }
   .btn-save   { background:#2563eb; color:white; }
   .btn-cancel { background:#f3f4f6; color:#374151; }
   .btn-edit   { background:#f0f7ff; color:#2563eb; }
   .btn-del    { background:#fef2f2; color:#ef4444; }
+  .btn-add    { background:#f0fdf4; color:#16a34a; }
   .search-bar { display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
   .search-bar input, .search-bar select { padding:0.5rem 0.875rem; border:1.5px solid #d1d5db; border-radius:0.5rem; font-size:0.875rem; font-family:inherit; outline:none; background:white; }
   .search-bar input { flex:1; min-width:160px; }
+  .input-sm { padding:0.35rem 0.5rem; border:1.5px solid #d1d5db; border-radius:0.375rem; font-size:0.8rem; font-family:inherit; outline:none; width:100%; }
+  .input-sm:focus { border-color:#2563eb; }
+  .course-list { margin-top:0.5rem; }
+  .course-item { background:#f9fafb; border-radius:0.5rem; padding:0.625rem 0.875rem; margin-bottom:0.375rem; font-size:0.82rem; color:#374151; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; }
+  .upload-area { border:2px dashed #d1d5db; border-radius:0.875rem; padding:2rem; text-align:center; cursor:pointer; transition:border-color 0.2s; background:white; }
+  .upload-area:hover { border-color:#2563eb; }
+  .upload-area input { display:none; }
+  .upload-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+  .upload-desc { font-size:0.875rem; color:#6b7280; line-height:1.6; }
+  .preview-table { overflow-x:auto; margin-top:1.5rem; }
+  .template-btn { display:inline-flex; align-items:center; gap:0.4rem; background:#f0fdf4; color:#16a34a; border:1.5px solid #86efac; padding:0.5rem 1rem; border-radius:0.5rem; font-size:0.875rem; font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:1rem; }
 </style>
 </head>
 <body>
@@ -39,61 +52,110 @@
   <p class="page-sub">수강생 데이터를 입력하고 관리하세요</p>
 
   <div id="accessDenied" style="display:none" class="card">
-    <p style="color:#ef4444;text-align:center;padding:2rem">⛔ 관리자만 접근할 수 있습니다.</p>
+    <p style="color:#ef4444;text-align:center;padding:2rem">접근 권한이 없습니다.</p>
   </div>
 
   <div id="adminContent" style="display:none">
-    <!-- 수강생 등록 폼 -->
-    <div class="add-form" style="margin-bottom:1.5rem">
-      <p style="font-size:1rem;font-weight:600;color:#111827;margin-bottom:1rem">수강생 등록</p>
-      <div id="formError"   class="error-msg"   style="display:none"></div>
-      <div id="formSuccess" class="success-msg" style="display:none"></div>
-      <div class="form-row">
-        <div><label>이름 *</label><input type="text"  id="f_name"  class="input-field" placeholder="홍길동"></div>
-        <div><label>생년월일 *</label><input type="date" id="f_birth" class="input-field"></div>
-      </div>
-      <div class="form-row">
-        <div><label>기수</label>
-          <select id="f_gisu" class="input-field">
-            <option value="">미설정</option>
-            ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
-          </select>
-        </div>
-        <div><label>수료시간</label><input type="number" id="f_hours" class="input-field" placeholder="예: 120"></div>
-      </div>
-      <div class="form-row">
-        <div><label>수강 시작일</label><input type="date" id="f_start" class="input-field"></div>
-        <div><label>수강 종료일</label><input type="date" id="f_end"   class="input-field"></div>
-      </div>
-      <div class="form-group">
-        <label>전화번호</label>
-        <input type="text" id="f_phone" class="input-field" placeholder="010-0000-0000">
-      </div>
-      <button class="btn-primary" style="width:100%;justify-content:center;padding:0.75rem" onclick="addStudent()">등록</button>
+    <div class="tab-wrap">
+      <button class="tab active" onclick="switchTab('list')">수강생 목록</button>
+      <button class="tab" onclick="switchTab('add')">직접 등록</button>
+      <button class="tab" onclick="switchTab('excel')">엑셀 업로드</button>
     </div>
 
-    <!-- 목록 -->
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="이름으로 검색..." oninput="filterStudents()">
-      <select id="gisuFilter" onchange="filterStudents()">
-        <option value="">전체 기수</option>
-        <option value="미설정">미설정</option>
-        ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
-      </select>
+    <!-- 수강생 목록 -->
+    <div class="panel active" id="panel-list">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="이름으로 검색..." oninput="filterStudents()">
+        <select id="gisuFilter" onchange="filterStudents()">
+          <option value="">전체 기수</option>
+          <option value="미설정">미설정</option>
+          ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
+        </select>
+      </div>
+      <p style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:0.75rem">
+        수강생 목록 <span id="countLabel" style="font-weight:400;color:#9ca3af;font-size:0.85rem"></span>
+      </p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>이름</th><th>생년월일</th><th>전화번호</th><th>교육 이력</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
     </div>
-    <p style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:0.75rem">
-      수강생 목록 <span id="countLabel" style="font-weight:400;color:#9ca3af;font-size:0.85rem"></span>
-    </p>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>이름</th><th>생년월일</th><th>기수</th>
-            <th>수강기간</th><th>수료시간</th><th>전화번호</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+
+    <!-- 직접 등록 -->
+    <div class="panel" id="panel-add">
+      <div style="max-width:600px">
+        <div class="card" style="margin-bottom:1.5rem">
+          <p style="font-size:1rem;font-weight:600;color:#111827;margin-bottom:1rem">수강생 기본 정보</p>
+          <div id="addError"   class="error-msg"   style="display:none"></div>
+          <div id="addSuccess" class="success-msg" style="display:none"></div>
+          <div class="form-row">
+            <div><label>이름 *</label><input type="text"  id="f_name"  class="input-field" placeholder="홍길동"></div>
+            <div><label>생년월일 *</label><input type="date" id="f_birth" class="input-field"></div>
+          </div>
+          <div class="form-group">
+            <label>전화번호</label>
+            <input type="text" id="f_phone" class="input-field" placeholder="010-0000-0000">
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.5rem">
+          <p style="font-size:1rem;font-weight:600;color:#111827;margin-bottom:1rem">교육 이력 추가</p>
+          <div class="form-group">
+            <label>교육명 *</label>
+            <input type="text" id="f_edu" class="input-field" placeholder="한국수어교원 양성과정">
+          </div>
+          <div class="form-row">
+            <div><label>기수 (없으면 빈칸)</label>
+              <select id="f_gisu" class="input-field">
+                <option value="">없음</option>
+                ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
+              </select>
+            </div>
+            <div><label>수료시간</label><input type="number" id="f_hours" class="input-field" placeholder="예: 120"></div>
+          </div>
+          <div class="form-row">
+            <div><label>수강 시작일</label><input type="date" id="f_start" class="input-field"></div>
+            <div><label>수강 종료일</label><input type="date" id="f_end"   class="input-field"></div>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;justify-content:center;padding:0.75rem" onclick="addStudent()">등록</button>
+      </div>
+    </div>
+
+    <!-- 엑셀 업로드 -->
+    <div class="panel" id="panel-excel">
+      <div style="max-width:700px">
+        <button class="template-btn" onclick="downloadTemplate()">📥 엑셀 양식 다운로드</button>
+
+        <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+          <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcel(event)">
+          <div class="upload-icon">📊</div>
+          <p style="font-size:1rem;font-weight:600;color:#111827;margin-bottom:0.5rem">엑셀 파일을 클릭하여 선택</p>
+          <div class="upload-desc">
+            지원 형식: .xlsx, .xls<br>
+            컬럼 순서: 이름 / 생년월일 / 전화번호 / 교육명 / 기수 / 수강시작일 / 수강종료일 / 수료시간
+          </div>
+        </div>
+
+        <div id="excelPreview" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 0.75rem">
+            <p style="font-size:1rem;font-weight:600;color:#111827">미리보기 <span id="previewCount" style="font-weight:400;color:#9ca3af;font-size:0.85rem"></span></p>
+            <button class="btn-primary" onclick="uploadExcelData()">업로드 실행</button>
+          </div>
+          <div id="excelError"   class="error-msg"   style="display:none"></div>
+          <div id="excelSuccess" class="success-msg" style="display:none"></div>
+          <div class="preview-table">
+            <table id="previewTable"></table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -102,7 +164,8 @@
 <script src="common.js"></script>
 <script>
   injectStyles();
-  let allStudents = [], editingId = null;
+  let allStudents = [];
+  let excelData   = [];
 
   (async () => {
     const user = await requireAuth();
@@ -113,21 +176,32 @@
     loadStudents();
   })();
 
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+  }
+
   async function loadStudents() {
-    const { data } = await sb.from('edu_students').select('*').order('su료_기수').order('name');
-    allStudents = data ?? [];
+    const { data: students } = await sb.from('edu_students').select('*, edu_courses(*)').order('created_at', { ascending: false });
+    allStudents = students ?? [];
     filterStudents();
   }
 
   function filterStudents() {
     const kw   = document.getElementById('searchInput').value.trim().toLowerCase();
     const gisu = document.getElementById('gisuFilter').value;
+
     const list = allStudents.filter(s => {
       const matchName = !kw || s.name?.toLowerCase().includes(kw);
-      const sg = s['su료_기수'];
-      const matchGisu = !gisu || (gisu==='미설정' && !sg) || sg===gisu;
+      const courses   = s.edu_courses ?? [];
+      const matchGisu = !gisu
+        || (gisu === '미설정' && courses.every(c => !c.기수))
+        || courses.some(c => c.기수 === gisu);
       return matchName && matchGisu;
     });
+
     document.getElementById('countLabel').textContent = `(${list.length}명)`;
     renderTable(list);
   }
@@ -136,97 +210,199 @@
 
   function renderTable(list) {
     const tbody = document.getElementById('tbody');
-    if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9ca3af">수강생이 없습니다.</td></tr>'; return; }
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#9ca3af">수강생이 없습니다.</td></tr>';
+      return;
+    }
 
     tbody.innerHTML = list.map(s => {
-      const gisu  = s['su료_기수'] ?? '';
-      const start = s['수강_시작일'] ? s['수강_시작일'].split('T')[0] : '';
-      const end   = s['su료_일']    ? s['su료_일'].split('T')[0]    : '';
-      const birth = s['생년월일']    ? s['생년월일'].split('T')[0]    : '';
-
-      if (editingId === s.id) return `
-        <tr class="edit-row">
-          <td><input class="input-sm" id="e_name_${s.id}"  value="${s.name??''}"></td>
-          <td><input class="input-sm" type="date" id="e_birth_${s.id}" value="${birth}"></td>
-          <td><select class="input-sm" id="e_gisu_${s.id}">
-            <option value="">미설정</option>
-            ${Array.from({length:13},(_,i)=>`<option value="${i+1}기" ${gisu===i+1+'기'?'selected':''}>${i+1}기</option>`).join('')}
-          </select></td>
-          <td style="display:flex;gap:0.25rem">
-            <input class="input-sm" type="date" id="e_start_${s.id}" value="${start}" style="width:110px">
-            <input class="input-sm" type="date" id="e_end_${s.id}"   value="${end}"   style="width:110px">
-          </td>
-          <td><input class="input-sm" type="number" id="e_hours_${s.id}" value="${s.수료시간??''}" style="width:70px"></td>
-          <td><input class="input-sm" id="e_phone_${s.id}" value="${s.phone??''}"></td>
-          <td style="display:flex;gap:0.25rem">
-            <button class="btn-sm btn-save"   onclick="saveEdit('${s.id}')">저장</button>
-            <button class="btn-sm btn-cancel" onclick="cancelEdit()">취소</button>
-          </td>
-        </tr>`;
+      const courses = s.edu_courses ?? [];
+      const courseHTML = courses.map(c => `
+        <div class="course-item">
+          <span>${c.교육명} ${c.기수 ? '(' + c.기수 + ')' : ''} ${c.수강_시작일 ? fmt(c.수강_시작일) + ' ~ ' + fmt(c.수강_종료일) : ''} ${c.수료시간 ? c.수료시간 + '시간' : ''}</span>
+          <button class="btn-sm btn-del" onclick="deleteCourse('${c.id}', '${s.id}')">삭제</button>
+        </div>`).join('');
 
       return `
         <tr>
           <td><strong>${s.name}</strong></td>
-          <td>${fmt(s['생년월일'])}</td>
-          <td>${gisu ? `<span class="badge badge-blue">${gisu}</span>` : '<span style="color:#9ca3af">미설정</span>'}</td>
-          <td style="font-size:0.8rem">${start||'-'} ~ ${end||'-'}</td>
-          <td>${s.수료시간 ? s.수료시간+'시간' : '-'}</td>
-          <td>${s.phone||'-'}</td>
-          <td style="display:flex;gap:0.25rem">
-            <button class="btn-sm btn-edit" onclick="startEdit('${s.id}')">수정</button>
-            <button class="btn-sm btn-del"  onclick="delStudent('${s.id}')">삭제</button>
+          <td>${fmt(s.생년월일)}</td>
+          <td>${s.phone || '-'}</td>
+          <td>
+            <div class="course-list">${courseHTML || '<span style="color:#9ca3af">교육 이력 없음</span>'}</div>
+            <button class="btn-sm btn-add" style="margin-top:0.5rem" onclick="showAddCourse('${s.id}')">+ 교육 추가</button>
+          </td>
+          <td>
+            <button class="btn-sm btn-del" onclick="deleteStudent('${s.id}')">삭제</button>
           </td>
         </tr>`;
     }).join('');
   }
 
-  function startEdit(id) { editingId=id; filterStudents(); }
-  function cancelEdit()  { editingId=null; filterStudents(); }
-
-  async function saveEdit(id) {
-    const { error } = await sb.from('edu_students').update({
-      name:        document.getElementById('e_name_'+id).value,
-      생년월일:    document.getElementById('e_birth_'+id).value || null,
-      'su료_기수': document.getElementById('e_gisu_'+id).value || null,
-      '수강_시작일':document.getElementById('e_start_'+id).value || null,
-      'su료_일':   document.getElementById('e_end_'+id).value || null,
-      수료시간:    Number(document.getElementById('e_hours_'+id).value) || null,
-      phone:       document.getElementById('e_phone_'+id).value || null,
-    }).eq('id', id);
-    if (error) { alert('저장 실패: '+error.message); return; }
-    editingId = null;
+  async function deleteStudent(id) {
+    if (!confirm('수강생을 삭제하시겠습니까? 교육 이력도 모두 삭제됩니다.')) return;
+    await sb.from('edu_students').delete().eq('id', id);
     loadStudents();
   }
 
-  async function delStudent(id) {
-    if (!confirm('수강생 정보를 삭제하시겠습니까?')) return;
-    await sb.from('edu_students').delete().eq('id', id);
+  async function deleteCourse(courseId, studentId) {
+    if (!confirm('교육 이력을 삭제하시겠습니까?')) return;
+    await sb.from('edu_courses').delete().eq('id', courseId);
     loadStudents();
+  }
+
+  function showAddCourse(studentId) {
+    const edu   = prompt('교육명을 입력하세요:');
+    if (!edu) return;
+    const gisu  = prompt('기수를 입력하세요 (없으면 빈칸):') || null;
+    const start = prompt('수강 시작일 (예: 2024-01-01):') || null;
+    const end   = prompt('수강 종료일 (예: 2024-06-30):') || null;
+    const hours = prompt('수료시간 (숫자만, 없으면 빈칸):') || null;
+
+    sb.from('edu_courses').insert({
+      student_id: studentId,
+      교육명: edu,
+      기수: gisu,
+      수강_시작일: start,
+      수강_종료일: end,
+      수료시간: hours ? Number(hours) : null,
+    }).then(() => loadStudents());
   }
 
   async function addStudent() {
     const name  = document.getElementById('f_name').value.trim();
     const birth = document.getElementById('f_birth').value;
-    const err   = document.getElementById('formError');
-    const suc   = document.getElementById('formSuccess');
-    err.style.display='none'; suc.style.display='none';
+    const phone = document.getElementById('f_phone').value.trim();
+    const edu   = document.getElementById('f_edu').value.trim();
+    const err   = document.getElementById('addError');
+    const suc   = document.getElementById('addSuccess');
+    err.style.display = 'none'; suc.style.display = 'none';
 
-    if (!name || !birth) { err.textContent='이름과 생년월일은 필수입니다.'; err.style.display='block'; return; }
+    if (!name || !birth) { err.textContent = '이름과 생년월일은 필수입니다.'; err.style.display = 'block'; return; }
 
-    const { error } = await sb.from('edu_students').insert({
-      name, 생년월일: birth,
-      'su료_기수':  document.getElementById('f_gisu').value  || null,
-      '수강_시작일': document.getElementById('f_start').value || null,
-      'su료_일':    document.getElementById('f_end').value   || null,
-      수료시간:     Number(document.getElementById('f_hours').value) || null,
-      phone:        document.getElementById('f_phone').value || null,
-    });
+    const { data: student, error } = await sb.from('edu_students')
+      .insert({ name, 생년월일: birth, phone: phone || null })
+      .select().single();
 
-    if (error) { err.textContent='등록 실패: '+error.message; err.style.display='block'; return; }
-    suc.textContent = '✅ '+name+' 님이 등록되었습니다.';
+    if (error) { err.textContent = '등록 실패: ' + error.message; err.style.display = 'block'; return; }
+
+    if (edu) {
+      await sb.from('edu_courses').insert({
+        student_id:  student.id,
+        교육명:      edu,
+        기수:        document.getElementById('f_gisu').value  || null,
+        수강_시작일: document.getElementById('f_start').value || null,
+        수강_종료일: document.getElementById('f_end').value   || null,
+        수료시간:    Number(document.getElementById('f_hours').value) || null,
+      });
+    }
+
+    suc.textContent = '✅ ' + name + ' 님이 등록되었습니다.';
     suc.style.display = 'block';
-    ['f_name','f_birth','f_hours','f_start','f_end','f_phone'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('f_gisu').value='';
+    ['f_name','f_birth','f_phone','f_edu','f_hours','f_start','f_end'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f_gisu').value = '';
+    loadStudents();
+  }
+
+  // 엑셀 양식 다운로드
+  function downloadTemplate() {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['이름','생년월일','전화번호','교육명','기수','수강시작일','수강종료일','수료시간'],
+      ['홍길동','1990-01-01','010-1234-5678','한국수어교원 양성과정','1기','2024-01-01','2024-06-30','120'],
+      ['홍길동','1990-01-01','010-1234-5678','수어통역사 과정','','2024-07-01','2024-07-01','8'],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '수강생');
+    XLSX.writeFile(wb, '수강생_업로드_양식.xlsx');
+  }
+
+  // 엑셀 파일 처리
+  function handleExcel(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb   = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+
+      // 헤더 제외
+      const data = rows.slice(1).filter(r => r[0]);
+      excelData  = data.map(r => ({
+        name:       r[0]?.toString().trim()  || '',
+        birth:      r[1]?.toString().trim()  || '',
+        phone:      r[2]?.toString().trim()  || '',
+        edu:        r[3]?.toString().trim()  || '',
+        gisu:       r[4]?.toString().trim()  || '',
+        start:      r[5]?.toString().trim()  || '',
+        end:        r[6]?.toString().trim()  || '',
+        hours:      r[7]?.toString().trim()  || '',
+      }));
+
+      document.getElementById('previewCount').textContent = `(${excelData.length}행)`;
+      document.getElementById('excelPreview').style.display = 'block';
+
+      const table = document.getElementById('previewTable');
+      table.innerHTML = `
+        <thead><tr>
+          <th>이름</th><th>생년월일</th><th>전화번호</th><th>교육명</th><th>기수</th><th>수강시작일</th><th>수강종료일</th><th>수료시간</th>
+        </tr></thead>
+        <tbody>
+          ${excelData.map(r => `<tr>
+            <td>${r.name}</td><td>${r.birth}</td><td>${r.phone}</td>
+            <td>${r.edu}</td><td>${r.gisu}</td><td>${r.start}</td>
+            <td>${r.end}</td><td>${r.hours}</td>
+          </tr>`).join('')}
+        </tbody>`;
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  // 엑셀 데이터 업로드
+  async function uploadExcelData() {
+    const err = document.getElementById('excelError');
+    const suc = document.getElementById('excelSuccess');
+    err.style.display = 'none'; suc.style.display = 'none';
+
+    if (!excelData.length) { err.textContent = '업로드할 데이터가 없습니다.'; err.style.display = 'block'; return; }
+
+    let success = 0, fail = 0;
+
+    for (const row of excelData) {
+      if (!row.name || !row.birth) { fail++; continue; }
+
+      // 기존 수강생 확인 (이름+생년월일)
+      let { data: existing } = await sb.from('edu_students')
+        .select('id').eq('name', row.name).eq('생년월일', row.birth).single();
+
+      let studentId = existing?.id;
+
+      // 없으면 새로 생성
+      if (!studentId) {
+        const { data: newStudent, error } = await sb.from('edu_students')
+          .insert({ name: row.name, 생년월일: row.birth, phone: row.phone || null })
+          .select().single();
+        if (error) { fail++; continue; }
+        studentId = newStudent.id;
+      }
+
+      // 교육 이력 추가
+      if (row.edu) {
+        await sb.from('edu_courses').insert({
+          student_id:  studentId,
+          교육명:      row.edu,
+          기수:        row.gisu  || null,
+          수강_시작일: row.start || null,
+          수강_종료일: row.end   || null,
+          수료시간:    row.hours ? Number(row.hours) : null,
+        });
+      }
+      success++;
+    }
+
+    suc.textContent = `✅ ${success}건 업로드 완료! ${fail > 0 ? fail + '건 실패' : ''}`;
+    suc.style.display = 'block';
     loadStudents();
   }
 </script>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공지사항 관리 — 한국수어교원 양성과정</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  .form-group { margin-bottom:1rem; }
+  textarea.input-field { resize:vertical; min-height:200px; line-height:1.7; }
+  .notice-item { background:white; border:1px solid #f3f4f6; border-radius:0.75rem; padding:1.25rem; margin-bottom:0.75rem; }
+  .notice-item.pinned { border-color:#bfdbfe; background:#f0f7ff; }
+  .notice-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:0.5rem; }
+  .notice-title { font-weight:600; color:#111827; font-size:0.95rem; flex:1; }
+  .notice-date  { font-size:0.75rem; color:#9ca3af; flex-shrink:0; }
+  .notice-content { font-size:0.85rem; color:#6b7280; line-height:1.6; white-space:pre-wrap; margin-bottom:0.75rem; }
+  .notice-actions { display:flex; gap:0.5rem; }
+  .btn-sm { padding:0.3rem 0.625rem; border:none; border-radius:0.375rem; font-size:0.75rem; font-weight:600; font-family:inherit; cursor:pointer; }
+  .btn-del  { background:#fef2f2; color:#ef4444; }
+  .btn-edit { background:#f0f7ff; color:#2563eb; }
+  .pin-toggle { background:#fefce8; color:#ca8a04; border:none; padding:0.3rem 0.625rem; border-radius:0.375rem; font-size:0.75rem; font-weight:600; cursor:pointer; }
+  @media (max-width:900px) { .two-col { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="main">
+  <h1 class="page-title">📢 공지사항 관리</h1>
+  <p class="page-sub">공지사항을 등록하고 관리하세요</p>
+
+  <div class="two-col">
+    <!-- 등록/수정 폼 -->
+    <div>
+      <div class="card">
+        <p style="font-size:1rem;font-weight:600;color:#111827;margin-bottom:1rem" id="formTitle">공지사항 등록</p>
+        <div id="formError"   class="error-msg"   style="display:none"></div>
+        <div id="formSuccess" class="success-msg" style="display:none"></div>
+        <input type="hidden" id="editId">
+        <div class="form-group">
+          <label>제목 *</label>
+          <input type="text" id="f_title" class="input-field" placeholder="공지사항 제목">
+        </div>
+        <div class="form-group">
+          <label>내용 *</label>
+          <textarea id="f_content" class="input-field" placeholder="공지사항 내용을 입력하세요"></textarea>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:0.75rem">
+          <input type="checkbox" id="f_important" style="width:16px;height:16px;cursor:pointer">
+          <label for="f_important" style="margin:0;cursor:pointer">중요 공지 (상단 고정)</label>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+          <button class="btn-primary" style="flex:1;justify-content:center;padding:0.75rem" onclick="saveNotice()">저장</button>
+          <button class="btn-secondary" onclick="resetForm()" id="cancelBtn" style="display:none">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공지 목록 -->
+    <div>
+      <p style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:0.75rem">
+        등록된 공지사항 <span id="countLabel" style="font-weight:400;color:#9ca3af;font-size:0.85rem"></span>
+      </p>
+      <div id="noticeList"><div style="text-align:center;padding:2rem;color:#9ca3af">불러오는 중...</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+  injectStyles();
+
+  (async () => {
+    const user = await requireAuth();
+    if (!user) return;
+    renderSidebar('notices-admin.html');
+    if (!isAdminUser()) { location.href = 'notices.html'; return; }
+    loadNotices();
+  })();
+
+  async function loadNotices() {
+    const { data } = await sb.from('edu_notices').select('*')
+      .order('is_important', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    document.getElementById('countLabel').textContent = `(${data?.length ?? 0}건)`;
+    const el = document.getElementById('noticeList');
+
+    if (!data?.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af">등록된 공지사항이 없습니다.</div>'; return; }
+
+    el.innerHTML = data.map(n => `
+      <div class="notice-item ${n.is_important ? 'pinned' : ''}" id="notice_${n.id}">
+        <div class="notice-header">
+          <span class="notice-title">${n.is_important ? '📌 ' : ''}${n.title}</span>
+          <span class="notice-date">${new Date(n.created_at).toLocaleDateString('ko-KR')}</span>
+        </div>
+        <div class="notice-content">${n.content.length > 100 ? n.content.slice(0,100)+'...' : n.content}</div>
+        <div class="notice-actions">
+          <button class="btn-sm btn-edit" onclick="editNotice('${n.id}')">수정</button>
+          <button class="pin-toggle" onclick="togglePin('${n.id}', ${n.is_important})">${n.is_important ? '고정 해제' : '고정'}</button>
+          <button class="btn-sm btn-del"  onclick="deleteNotice('${n.id}')">삭제</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function saveNotice() {
+    const title     = document.getElementById('f_title').value.trim();
+    const content   = document.getElementById('f_content').value.trim();
+    const important = document.getElementById('f_important').checked;
+    const editId    = document.getElementById('editId').value;
+    const err = document.getElementById('formError');
+    const suc = document.getElementById('formSuccess');
+    err.style.display = 'none'; suc.style.display = 'none';
+
+    if (!title || !content) { err.textContent = '제목과 내용을 입력해주세요.'; err.style.display = 'block'; return; }
+
+    if (editId) {
+      await sb.from('edu_notices').update({ title, content, is_important: important }).eq('id', editId);
+      suc.textContent = '✅ 공지사항이 수정되었습니다.';
+    } else {
+      await sb.from('edu_notices').insert({ title, content, is_important: important });
+      suc.textContent = '✅ 공지사항이 등록되었습니다.';
+    }
+
+    suc.style.display = 'block';
+    resetForm();
+    loadNotices();
+  }
+
+  async function editNotice(id) {
+    const { data } = await sb.from('edu_notices').select('*').eq('id', id).single();
+    document.getElementById('f_title').value     = data.title;
+    document.getElementById('f_content').value   = data.content;
+    document.getElementById('f_important').checked = data.is_important;
+    document.getElementById('editId').value      = id;
+    document.getElementById('formTitle').textContent = '공지사항 수정';
+    document.getElementById('cancelBtn').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  async function togglePin(id, current) {
+    await sb.from('edu_notices').update({ is_important: !current }).eq('id', id);
+    loadNotices();
+  }
+
+  async function deleteNotice(id) {
+    if (!confirm('공지사항을 삭제하시겠습니까?')) return;
+    await sb.from('edu_notices').delete().eq('id', id);
+    loadNotices();
+  }
+
+  function resetForm() {
+    document.getElementById('f_title').value = '';
+    document.getElementById('f_content').value = '';
+    document.getElementById('f_important').checked = false;
+    document.getElementById('editId').value = '';
+    document.getElementById('formTitle').textContent = '공지사항 등록';
+    document.getElementById('cancelBtn').style.display = 'none';
+  }
+</script>
+</body>
+</html>

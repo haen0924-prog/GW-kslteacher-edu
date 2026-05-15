@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로그인 — 한국수어교원 양성과정</title>
+<title>Login — KSL Teacher Training</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -38,41 +38,41 @@
 </head>
 <body>
 <div class="top-bar">
-  <span class="top-bar-left">한국수어교육원</span>
-  <span class="top-bar-right">강원특별자치도수어문화원</span>
+  <span class="top-bar-left">KSL Education Institute</span>
+  <span class="top-bar-right">Gangwon KSL Culture Center</span>
 </div>
 <div class="card">
   <div class="logo">
-    <div class="logo-icon">한국수어교원 양성과정</div>
-    <h1>수강생 관리 시스템</h1>
-    <p>로그인하여 학습 현황을 확인하세요</p>
+    <div class="logo-icon">KSL Teacher Training</div>
+    <h1>Student Management System</h1>
+    <p>Login to check your learning status</p>
   </div>
 
   <!-- 탭 -->
   <div class="tab-wrap">
-    <button class="tab active" onclick="switchTab('student')">수강생 로그인</button>
-    <button class="tab" onclick="switchTab('admin')">관리자 로그인</button>
+    <button class="tab active" onclick="switchTab('student')">Student Login</button>
+    <button class="tab" onclick="switchTab('admin')">Admin Login</button>
   </div>
 
-  <!-- 수강생 로그인 -->
+  <!-- Student Login -->
   <div class="panel active" id="panel-student">
     <div class="error" id="studentError"></div>
-    <label>이름</label>
-    <input type="text" id="s_name" placeholder="홍길동">
-    <label>생년월일</label>
+    <label>Name</label>
+    <input type="text" id="s_name" placeholder="Hong Gildong">
+    <label>Date of Birth</label>
     <input type="date" id="s_birth">
-    <button class="btn" onclick="studentLogin()">로그인</button>
+    <button class="btn" onclick="studentLogin()">Login</button>
   </div>
 
-  <!-- 관리자 로그인 -->
+  <!-- Admin Login -->
   <div class="panel" id="panel-admin">
     <div class="error" id="adminError"></div>
-    <label>이메일</label>
+    <label>Email</label>
     <input type="email" id="a_email" placeholder="admin@example.com">
-    <label>비밀번호</label>
-    <input type="password" id="a_password" placeholder="비밀번호 입력">
-    <button class="btn" onclick="adminLogin()">관리자 로그인</button>
-    <p class="forgot-link"><a href="forgot-password.html">비밀번호를 잊으셨나요?</a></p>
+    <label>Password</label>
+    <input type="password" id="a_password" placeholder="Password 입력">
+    <button class="btn" onclick="adminLogin()">Admin Login</button>
+    <p class="forgot-link"><a href="forgot-password.html">Password를 잊으셨나요?</a></p>
   </div>
 </div>
 
@@ -81,7 +81,7 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // 이미 로그인된 경우
+  // 이미 Login된 경우
   const si = sessionStorage.getItem('student_id');
   if (si) location.href = 'dashboard.html';
   sb.auth.getSession().then(({ data }) => {
@@ -95,7 +95,7 @@
     event.target.classList.add('active');
   }
 
-  // 수강생 로그인 (이름 + 생년월일)
+  // Student Login (Name + Date of Birth)
   async function studentLogin() {
     const name  = document.getElementById('s_name').value.trim();
     const birth = document.getElementById('s_birth').value;
@@ -103,18 +103,18 @@
     err.style.display = 'none';
 
     if (!name || !birth) {
-      err.textContent = '이름과 생년월일을 입력해주세요.';
+      err.textContent = 'Name과 Date of Birth을 입력해주세요.';
       err.style.display = 'block'; return;
     }
 
     const { data, error } = await sb.from('edu_students')
       .select('*')
       .eq('name', name)
-      .eq('생년월일', birth)
+      .eq('Date of Birth', birth)
       .single();
 
     if (error || !data) {
-      err.textContent = '이름 또는 생년월일이 일치하지 않습니다.';
+      err.textContent = 'Name 또는 Date of Birth이 일치하지 않습니다.';
       err.style.display = 'block'; return;
     }
 
@@ -125,7 +125,7 @@
     location.href = 'dashboard.html';
   }
 
-  // 관리자 로그인
+  // Admin Login
   async function adminLogin() {
     const email    = document.getElementById('a_email').value.trim();
     const password = document.getElementById('a_password').value;
@@ -134,7 +134,7 @@
 
     const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
-      err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      err.textContent = 'Email 또는 Password가 올바르지 않습니다.';
       err.style.display = 'block'; return;
     }
 
