@@ -74,8 +74,13 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const si = sessionStorage.getItem('student_id');
-  if (si) location.href = 'dashboard.html';
+  const si = sessionStorage.getItem('student_id') || localStorage.getItem('student_id');
+  if (si) {
+    sessionStorage.setItem('student_id', si);
+    sessionStorage.setItem('student_name', localStorage.getItem('student_name') || '');
+    sessionStorage.setItem('is_admin', 'false');
+    location.href = 'dashboard.html';
+  }
   sb.auth.getSession().then(function(res) {
     if (res.data.session) location.href = 'dashboard.html';
   });
@@ -100,6 +105,8 @@
     sessionStorage.setItem('student_id', res.data.id);
     sessionStorage.setItem('student_name', res.data.name);
     sessionStorage.setItem('is_admin', 'false');
+    localStorage.setItem('student_id', res.data.id);
+    localStorage.setItem('student_name', res.data.name);
     location.href = 'dashboard.html';
   }
 
