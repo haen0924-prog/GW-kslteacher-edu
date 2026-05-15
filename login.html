@@ -114,7 +114,7 @@
       err.style.display = 'block';
       return;
     }
-    var res = await sb.from('edu_students').select('*').eq('name', name).eq('생년월일', birth).single();
+    var res = await sb.from('edu_students').select('*').eq('name', name).eq('birthdate', birth).single();
     if (res.error || !res.data) {
       err.textContent = '이름 또는 생년월일이 일치하지 않습니다.';
       err.style.display = 'block';
