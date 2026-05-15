@@ -46,7 +46,6 @@ function logout() {
   sb.auth.signOut();
   location.href = 'login.html';
 }
-
 function renderSidebar(activePage) {
   const name    = currentStudent?.name ?? '';
   const admin   = isAdminUser();
