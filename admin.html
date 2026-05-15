@@ -69,7 +69,7 @@
         <select id="gisuFilter" onchange="filterStudents()">
           <option value="">전체 기수</option>
           <option value="미설정">미설정</option>
-          ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
+          <option value="1기">1기</option> <option value="2기">2기</option> <option value="3기">3기</option> <option value="4기">4기</option> <option value="5기">5기</option> <option value="6기">6기</option> <option value="7기">7기</option> <option value="8기">8기</option> <option value="9기">9기</option> <option value="10기">10기</option> <option value="11기">11기</option> <option value="12기">12기</option> <option value="13기">13기</option>
         </select>
       </div>
       <p style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:0.75rem">
@@ -114,7 +114,7 @@
             <div><label>기수 (없으면 빈칸)</label>
               <select id="f_gisu" class="input-field">
                 <option value="">없음</option>
-                ${Array.from({length:13},(_,i)=>`<option value="${i+1}기">${i+1}기</option>`).join('')}
+                <option value="1기">1기</option> <option value="2기">2기</option> <option value="3기">3기</option> <option value="4기">4기</option> <option value="5기">5기</option> <option value="6기">6기</option> <option value="7기">7기</option> <option value="8기">8기</option> <option value="9기">9기</option> <option value="10기">10기</option> <option value="11기">11기</option> <option value="12기">12기</option> <option value="13기">13기</option>
               </select>
             </div>
             <div><label>수료시간</label><input type="number" id="f_hours" class="input-field" placeholder="예: 120"></div>
