@@ -226,7 +226,7 @@
       return `
         <tr>
           <td><strong>${s.name}</strong></td>
-          <td>${fmt(s.생년월일)}</td>
+          <td>${fmt(s.birdate)}</td>
           <td>${s.phone || '-'}</td>
           <td>
             <div class="course-list">${courseHTML || '<span style="color:#9ca3af">교육 이력 없음</span>'}</div>
@@ -281,7 +281,7 @@
     if (!name || !birth) { err.textContent = '이름과 생년월일은 필수입니다.'; err.style.display = 'block'; return; }
 
     const { data: student, error } = await sb.from('edu_students')
-      .insert({ name, 생년월일: birth, phone: phone || null })
+      .insert({ name, birdate: birth, phone: phone || null })
       .select().single();
 
     if (error) { err.textContent = '등록 실패: ' + error.message; err.style.display = 'block'; return; }
@@ -381,7 +381,7 @@
       // 없으면 새로 생성
       if (!studentId) {
         const { data: newStudent, error } = await sb.from('edu_students')
-          .insert({ name: row.name, 생년월일: row.birth, phone: row.phone || null })
+          .insert({ name: row.name, birdate: row.birth, phone: row.phone || null })
           .select().single();
         if (error) { fail++; continue; }
         studentId = newStudent.id;
