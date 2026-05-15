@@ -23,7 +23,6 @@
   <h1 class="page-title">👤 마이페이지</h1>
   <p class="page-sub">내 정보를 확인하고 이메일을 수정하세요</p>
 
-  <!-- 내 정보 -->
   <div class="section">
     <div class="card">
       <p class="section-title">내 정보</p>
@@ -31,7 +30,6 @@
     </div>
   </div>
 
-  <!-- 이메일 수정 -->
   <div class="section">
     <div class="card">
       <p class="section-title">📬 이메일 수정</p>
@@ -63,17 +61,27 @@
     if (!user) return;
     renderSidebar('mypage.html');
 
-    const { data } = await sb.from('edu_students').select('*').eq('id', user.id).single();
-    if (!data) return;
+    const studentId = sessionStorage.getItem('student_id') || localStorage.getItem('student_id');
+
+    if (!studentId) {
+      document.getElementById('infoArea').innerHTML = '<div style="color:#9ca3af;font-size:0.875rem">수강생만 이용할 수 있습니다.</div>';
+      return;
+    }
+
+    const { data } = await sb.from('edu_students').select('*').eq('id', studentId).single();
+
+    if (!data) {
+      document.getElementById('infoArea').innerHTML = '<div style="color:#9ca3af;font-size:0.875rem">정보를 불러올 수 없습니다.</div>';
+      return;
+    }
 
     document.getElementById('emailInput').value = data.email ?? '';
-
     document.getElementById('infoArea').innerHTML = `
       <div class="info-row"><span class="info-label">이름</span><span class="info-value">${data.name}</span></div>
-      <div class="info-row"><span class="info-label">생년월일</span><span class="info-value">${fmt(data['생년월일'])}</span></div>
-      <div class="info-row"><span class="info-label">기수</span><span class="info-value">${data['su료_기수']||'-'}</span></div>
+      <div class="info-row"><span class="info-label">생년월일</span><span class="info-value">${fmt(data.birthdate)}</span></div>
+      <div class="info-row"><span class="info-label">기수</span><span class="info-value">${data['su료_기수'] || '-'}</span></div>
       <div class="info-row"><span class="info-label">수강기간</span><span class="info-value">${fmt(data['수강_시작일'])} ~ ${fmt(data['su료_일'])}</span></div>
-      <div class="info-row"><span class="info-label">수료시간</span><span class="info-value">${data.수료시간 ? data.수료시간+'시간' : '-'}</span></div>
+      <div class="info-row"><span class="info-label">수료시간</span><span class="info-value">${data.수료시간 ? data.수료시간 + '시간' : '-'}</span></div>
     `;
   })();
 
@@ -81,18 +89,33 @@
     const email = document.getElementById('emailInput').value.trim();
     const suc   = document.getElementById('emailSuccess');
     const err   = document.getElementById('emailError');
-    suc.style.display='none'; err.style.display='none';
+    suc.style.display = 'none';
+    err.style.display = 'none';
 
     if (!email || !email.includes('@')) {
-      err.textContent='올바른 이메일 주소를 입력해주세요.';
-      err.style.display='block'; return;
+      err.textContent = '올바른 이메일 주소를 입력해주세요.';
+      err.style.display = 'block';
+      return;
     }
 
-    const studentId = sessionStorage.getItem('student_id');
+    const studentId = sessionStorage.getItem('student_id') || localStorage.getItem('student_id');
+
+    if (!studentId) {
+      err.textContent = '수강생만 이용할 수 있습니다.';
+      err.style.display = 'block';
+      return;
+    }
+
     const { error } = await sb.from('edu_students').update({ email }).eq('id', studentId);
-    if (error) { err.textContent='저장 실패: '+error.message; err.style.display='block'; return; }
-    suc.textContent='✅ 이메일이 저장되었습니다.';
-    suc.style.display='block';
+
+    if (error) {
+      err.textContent = '저장 실패: ' + error.message;
+      err.style.display = 'block';
+      return;
+    }
+
+    suc.textContent = '✅ 이메일이 저장되었습니다.';
+    suc.style.display = 'block';
   }
 </script>
 </body>
