@@ -41,6 +41,8 @@ function isAdminUser() {
 
 function logout() {
   sessionStorage.clear();
+  localStorage.removeItem('student_id');
+  localStorage.removeItem('student_name');
   sb.auth.signOut();
   location.href = 'login.html';
 }
